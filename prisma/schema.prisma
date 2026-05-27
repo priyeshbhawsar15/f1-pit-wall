@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                String   @id @default(uuid())
+  sessionUID        BigInt   @unique
+  trackId           Int
+  sessionType       Int
+  weather           Int
+  totalLaps         Int
+  trackLength       Int
+  formula           Int
+  airTemperature    Int
+  trackTemperature  Int
+  safetyCarStatus   Int      @default(0)
+  networkGame       Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  participants         Participant[]
+  events               Event[]
+  finalClassifications FinalClassification[]
+  seasonRaces          SeasonRace[]
+
+  @@map("sessions")
+}
+
+model Participant {
+  id              String        @id @default(uuid())
+  sessionId       String
+  session         Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  carIndex        Int
+  driverId        Int
+  teamId          Int
+  raceNumber      Int
+  nationality     Int
+  name            String
+  aiControlled    Boolean       @default(false)
+  platform        Int           @default(255)
+  humanProfileId  String?
+  humanProfile    HumanProfile? @relation(fields: [humanProfileId], references: [id], onDelete: SetNull)
+
+  @@unique([sessionId, carIndex])
+  @@map("participants")
+}
+
+model HumanProfile {
+  id           String        @id @default(uuid())
+  name         String
+  color        String        @default("#E10600")
+  avatarUrl    String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  participants Participant[]
+
+  @@map("human_profiles")
+}
+
+model Event {
+  id            String   @id @default(uuid())
+  sessionId     String
+  session       Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  eventCode     String
+  timestamp     DateTime @default(now())
+  details       Json?
+
+  @@index([sessionId, eventCode])
+  @@map("events")
+}
+
+model FinalClassification {
+  id              String  @id @default(uuid())
+  sessionId       String
+  session         Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  carIndex        Int
+  position        Int
+  numLaps         Int
+  gridPosition    Int
+  points          Int
+  numPitStops     Int
+  resultStatus    Int
+  bestLapTimeInMS Int
+  totalRaceTime   Float
+  penaltiesTime   Int
+  tyreStints      Json?
+
+  @@unique([sessionId, carIndex])
+  @@map("final_classifications")
+}
+
+model Season {
+  id        String       @id @default(uuid())
+  name      String
+  startDate DateTime?
+  endDate   DateTime?
+  isActive  Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  races     SeasonRace[]
+
+  @@map("seasons")
+}
+
+model SeasonRace {
+  id        String   @id @default(uuid())
+  seasonId  String
+  season    Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([seasonId, sessionId])
+  @@map("season_races")
+}

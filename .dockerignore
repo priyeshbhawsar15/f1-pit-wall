@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+*.md
+*.pdf
+*.txt
+.env
+.env.local
+dist

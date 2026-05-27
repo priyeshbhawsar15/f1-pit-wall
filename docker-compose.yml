@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: f1telemetry
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./prisma/migrations/init/migration.sql:/docker-entrypoint-initdb.d/01-hypertables.sql
+      - ./prisma/migrations/002_profiles_seasons/migration.sql:/docker-entrypoint-initdb.d/02-profiles-seasons.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3333:3333"
+      - "20777:20777/udp"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@timescaledb:5432/f1telemetry
+      REDIS_URL: redis://redis:6379
+      UDP_HOST: "0.0.0.0"
+      UDP_PORT: "20777"
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:3333
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:
