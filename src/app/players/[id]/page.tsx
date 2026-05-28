@@ -4,16 +4,17 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Trophy, Zap, AlertTriangle, Clock, TrendingUp, Flag, Swords, MapPin } from 'lucide-react';
+import { Trophy, Zap, AlertTriangle, Clock, TrendingUp, Flag, Swords, MapPin } from 'lucide-react';
 import { TRACK_NAMES, SESSION_TYPES, RESULT_STATUS, PENALTY_TYPES, INFRINGEMENT_TYPES } from '@/lib/constants';
 import { formatLapTime } from '@/lib/utils';
+import AppHeader from '@/components/AppHeader';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 function StatCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) {
   return (
     <div className="stat-block p-3">
-      <div className="text-[8px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>{label}</div>
+      <div className="text-[8px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>{label}</div>
       <div className="text-xl font-black font-mono tabular-nums" style={color ? { color } : undefined}>{value}</div>
       {sub && <div className="text-[9px] text-[var(--muted-foreground)] mt-0.5">{sub}</div>}
     </div>
@@ -44,7 +45,7 @@ export default function PlayerDetailPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -60,16 +61,16 @@ export default function PlayerDetailPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="red-bar" />
-      <header className="f1-header flex items-center gap-3 px-6 py-3">
-        <Link href="/players" className="text-[var(--muted-foreground)] hover:text-white transition-colors">
-          <ArrowLeft size={16} />
-        </Link>
-        <div className="divider-v" />
-        <span className="f1-logo-text">F1</span>
-        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: data.color }} />
-        <span className="font-bold text-sm" style={F1_FONT}>{data.name}</span>
-      </header>
+      <AppHeader
+        title="PLAYER"
+        backHref="/players"
+        meta={
+          <>
+            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: data.color }} />
+            <span className="font-bold text-[var(--foreground)]" style={BMW_FONT}>{data.name}</span>
+          </>
+        }
+      />
 
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* Profile hero */}
@@ -82,7 +83,7 @@ export default function PlayerDetailPage() {
               : data.name.charAt(0).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-2xl font-black" style={F1_FONT}>{data.name}</h1>
+            <h1 className="text-2xl font-black" style={BMW_FONT}>{data.name}</h1>
             <p className="text-xs text-[var(--muted-foreground)] mt-1">
               Member since {new Date(data.createdAt).toLocaleDateString()}
             </p>
@@ -100,7 +101,7 @@ export default function PlayerDetailPage() {
         {/* Stats grid */}
         {stats && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={F1_FONT}>Career Stats</h2>
+            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={BMW_FONT}>Career Stats</h2>
             <div className="grid grid-cols-4 gap-2 md:grid-cols-8">
               <StatCard label="Races" value={stats.races} />
               <StatCard label="Points" value={stats.points} color={data.color} />
@@ -123,7 +124,7 @@ export default function PlayerDetailPage() {
         {/* Grid vs Finish */}
         {races.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
-            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={F1_FONT}>Grid vs Finish</h2>
+            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={BMW_FONT}>Grid vs Finish</h2>
             <div className="card p-4">
               <div className="flex items-end gap-1 h-24 justify-center">
                 {races.filter((r) => r.gridPosition > 0 && r.position > 0).slice(-12).map((r: any, i: number) => {
@@ -149,7 +150,7 @@ export default function PlayerDetailPage() {
         {/* Track Records */}
         {trackRecords.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.09 }}>
-            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={F1_FONT}>Track Records</h2>
+            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={BMW_FONT}>Track Records</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {trackRecords.map((rec: any) => (
                 <div key={rec.trackId} className="card p-3 flex items-center gap-3">
@@ -168,18 +169,18 @@ export default function PlayerDetailPage() {
         {/* Time Penalties */}
         {penaltyDetails.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.095 }}>
-            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={F1_FONT}>
+            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={BMW_FONT}>
               Time Penalties ({penaltyDetails.length})
             </h2>
             <div className="card overflow-hidden">
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-[var(--card-border)]">
-                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Track</th>
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Lap</th>
-                    <th className="text-left px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Type</th>
-                    <th className="text-left px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Infringement</th>
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--yellow)]" style={F1_FONT}>Time</th>
+                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Track</th>
+                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Lap</th>
+                    <th className="text-left px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Type</th>
+                    <th className="text-left px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Infringement</th>
+                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--yellow)]" style={BMW_FONT}>Time</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -218,7 +219,7 @@ export default function PlayerDetailPage() {
 
         {/* Race history */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={F1_FONT}>
+          <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={BMW_FONT}>
             Race History ({races.length})
           </h2>
           {races.length === 0 ? (
@@ -238,8 +239,8 @@ export default function PlayerDetailPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.03 }}
                   >
-                    <div className="w-8 h-8 rounded-sm bg-[var(--accent-glow)] flex items-center justify-center flex-shrink-0">
-                      <span className="text-[10px] font-black text-[var(--accent)]">
+                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 bg-[var(--surface-elevated)]" style={{ borderRadius: 0 }}>
+                      <span className="text-[10px] font-black text-[var(--muted-foreground)]">
                         {SESSION_TYPES[r.sessionType]?.replace('Short ', '') || '?'}
                       </span>
                     </div>

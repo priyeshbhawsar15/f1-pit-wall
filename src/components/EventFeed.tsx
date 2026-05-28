@@ -5,23 +5,23 @@ import { EVENT_CODES } from '@/lib/constants';
 import { AlertTriangle, Flag, Zap, Car, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 const eventIcons: Record<string, React.ReactNode> = {
-  FTLP: <Zap size={10} className="text-[var(--purple)]" />,
-  RTMT: <AlertTriangle size={10} className="text-[var(--f1-red)]" />,
-  DRSE: <Zap size={10} className="text-[var(--green)]" />,
+  FTLP: <Zap size={10} className="text-[var(--m-blue-dark)]" />,
+  RTMT: <AlertTriangle size={10} className="text-[var(--m-red)]" />,
+  DRSE: <Zap size={10} className="text-[var(--success)]" />,
   DRSD: <Zap size={10} className="text-[var(--muted)]" />,
   CHQF: <Flag size={10} className="text-white" />,
-  RCWN: <Flag size={10} className="text-[var(--yellow)]" />,
-  PENA: <ShieldAlert size={10} className="text-[var(--yellow)]" />,
-  OVTK: <Car size={10} className="text-[var(--blue)]" />,
-  SCAR: <AlertTriangle size={10} className="text-[var(--orange)]" />,
-  COLL: <AlertTriangle size={10} className="text-[var(--orange)]" />,
-  RDFL: <Flag size={10} className="text-[var(--f1-red)]" />,
-  SPTP: <Zap size={10} className="text-[var(--blue)]" />,
-  STLG: <Zap size={10} className="text-[var(--yellow)]" />,
-  LGOT: <Zap size={10} className="text-[var(--green)]" />,
+  RCWN: <Flag size={10} className="text-[var(--warning)]" />,
+  PENA: <ShieldAlert size={10} className="text-[var(--warning)]" />,
+  OVTK: <Car size={10} className="text-[var(--m-blue-dark)]" />,
+  SCAR: <AlertTriangle size={10} className="text-[var(--warning)]" />,
+  COLL: <AlertTriangle size={10} className="text-[var(--m-red)]" />,
+  RDFL: <Flag size={10} className="text-[var(--m-red)]" />,
+  SPTP: <Zap size={10} className="text-[var(--m-blue-dark)]" />,
+  STLG: <Zap size={10} className="text-[var(--warning)]" />,
+  LGOT: <Zap size={10} className="text-[var(--success)]" />,
 };
 
 export default function EventFeed() {
@@ -80,8 +80,8 @@ export default function EventFeed() {
               key={events.length}
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="pill text-[8px]"
-              style={{ background: 'var(--f1-red-subtle)', color: 'var(--f1-red)', ...F1_FONT }}
+              className="pill bg-[var(--m-red)]/10 text-[var(--m-red)] text-[8px]"
+              style={BMW_FONT}
             >
               {events.length}
             </motion.span>
@@ -91,7 +91,7 @@ export default function EventFeed() {
       <div className="overflow-y-auto max-h-52">
         {events.length === 0 ? (
           <div className="px-4 py-8 text-center">
-            <span className="text-[10px] text-[var(--muted-foreground)]" style={F1_FONT}>
+            <span className="text-[10px] text-[var(--muted-foreground)]" style={BMW_FONT}>
               WAITING FOR EVENTS
             </span>
           </div>
@@ -108,22 +108,22 @@ export default function EventFeed() {
                     x: { type: 'spring', stiffness: 400, damping: 30 },
                     height: { duration: 0.15 },
                   }}
-                  className="px-3 py-[6px] flex items-center gap-2 border-b border-[var(--card-border)] hover:bg-white/[0.02]"
+                  className="px-4 py-3 flex items-center gap-3 border-b border-[var(--card-border)] hover:bg-white/[0.02]"
                 >
-                  <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
-                       style={{ background: 'var(--surface)' }}>
-                    {eventIcons[evt.code] || <Zap size={10} className="text-[var(--muted)]" />}
+                  <div className="w-6 h-6 flex items-center justify-center flex-shrink-0"
+                       style={{ background: 'var(--surface)', borderRadius: 0 }}>
+                    {eventIcons[evt.code] || <Zap size={11} className="text-[var(--muted)]" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-[10px] font-bold" style={F1_FONT}>
+                    <span className="text-[12px] font-bold" style={BMW_FONT}>
                       {EVENT_CODES[evt.code] || evt.code}
                     </span>
-                    <span className="text-[9px] text-[var(--muted-foreground)] ml-1.5">
+                    <span className="text-[10px] text-[var(--muted-foreground)] ml-2">
                       {formatEventDetails(evt.code, evt.details)}
                     </span>
                   </div>
                   {evt.timestamp && (
-                    <span className="text-[8px] text-[var(--muted)] whitespace-nowrap font-mono tabular-nums flex-shrink-0">
+                    <span className="text-[10px] text-[var(--muted)] whitespace-nowrap font-mono tabular-nums flex-shrink-0">
                       {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </span>
                   )}

@@ -5,7 +5,7 @@ import { TEAM_COLORS, TEAM_NAMES } from '@/lib/constants';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 interface SetupField {
   label: string;
@@ -42,10 +42,10 @@ const SETUP_FIELDS: SetupField[] = [
 function SetupBar({ value, min, max, color }: { value: number; min: number; max: number; color: string }) {
   const pct = Math.min(Math.max(((value - min) / (max - min)) * 100, 0), 100);
   return (
-    <div className="h-[3px] w-full bg-[var(--surface)] rounded-sm overflow-hidden">
+    <div className="h-[3px] w-full bg-[var(--surface)] overflow-hidden" style={{ borderRadius: 0 }}>
       <motion.div
-        className="h-full rounded-sm"
-        style={{ backgroundColor: color }}
+        className="h-full"
+        style={{ backgroundColor: color, borderRadius: 0 }}
         animate={{ width: `${pct}%` }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
       />
@@ -84,7 +84,7 @@ export default function CarSetupComparison() {
           <select
             value={car1Idx}
             onChange={(e) => setCar1Idx(parseInt(e.target.value, 10))}
-            className="bg-white/5 border border-[var(--card-border)] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[var(--accent)]"
+            className="bg-white/5 border border-[var(--card-border)] rounded-none px-2 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]"
           >
             {drivers.map((d) => (
               <option key={d.i} value={d.i}>{d.name || `Car ${d.i}`}</option>
@@ -93,7 +93,7 @@ export default function CarSetupComparison() {
           <select
             value={car2Idx}
             onChange={(e) => setCar2Idx(parseInt(e.target.value, 10))}
-            className="bg-white/5 border border-[var(--card-border)] rounded px-2 py-1.5 text-xs focus:outline-none focus:border-[var(--accent)]"
+            className="bg-white/5 border border-[var(--card-border)] rounded-none px-2 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]"
           >
             {drivers.map((d) => (
               <option key={d.i} value={d.i}>{d.name || `Car ${d.i}`}</option>
@@ -104,18 +104,18 @@ export default function CarSetupComparison() {
         {/* Legend */}
         <div className="flex items-center gap-4 mb-3 text-[10px]">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-1.5 rounded-full" style={{ backgroundColor: color1 }} />
+            <div className="w-3 h-1.5" style={{ backgroundColor: color1, borderRadius: 0 }} />
             <span>{driver1?.name || `Car ${car1Idx}`}</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-1.5 rounded-full" style={{ backgroundColor: color2 }} />
+            <div className="w-3 h-1.5" style={{ backgroundColor: color2, borderRadius: 0 }} />
             <span>{driver2?.name || `Car ${car2Idx}`}</span>
           </div>
         </div>
 
         {/* Setup fields */}
         {(!setup1 && !setup2) ? (
-          <div className="text-center py-8 text-[10px] text-[var(--muted-foreground)]" style={F1_FONT}>
+          <div className="text-center py-8 text-[10px] text-[var(--muted-foreground)]" style={BMW_FONT}>
             WAITING FOR SETUP DATA
           </div>
         ) : (

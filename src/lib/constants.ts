@@ -190,6 +190,45 @@ export const EVENT_CODES: Record<string, string> = {
   COLL: 'Collision',
 };
 
+export const TEAM_LOGOS: Record<number, string> = {
+  0: 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Mercedes-AMG_Petronas_F1_Team_Logo.svg',
+  1: 'https://upload.wikimedia.org/wikipedia/en/3/36/Scuderia_Ferrari_HP_logo_24.svg',
+  2: 'https://upload.wikimedia.org/wikipedia/en/e/ea/Oracle_Red_Bull_Racing_logo.svg',
+  3: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Williams_Racing_2020_logo.svg',
+  4: 'https://upload.wikimedia.org/wikipedia/commons/4/41/Aston_Martin_Aramco_Cognizant_F1_Team_logo.svg',
+  5: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Alpine_F1_Team_Logo.svg',
+  6: 'https://upload.wikimedia.org/wikipedia/en/e/ee/Visa_Cash_App_RB_F1_Team_logo.svg',
+  7: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Haas_F1_Team_logo.svg',
+  8: 'https://upload.wikimedia.org/wikipedia/commons/3/30/McLaren_Racing_logo.png',
+  9: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/Stake_F1_Team_Kick_Sauber_logo.svg',
+};
+
+export const DRIVER_FLAGS: Record<string, string> = {
+  'Pierre Gasly': 'https://flagcdn.com/w40/fr.png',
+  'Jack Doohan': 'https://flagcdn.com/w40/au.png',
+  'Fernando Alonso': 'https://flagcdn.com/w40/es.png',
+  'Lance Stroll': 'https://flagcdn.com/w40/ca.png',
+  'Charles Leclerc': 'https://flagcdn.com/w40/mc.png',
+  'Lewis Hamilton': 'https://flagcdn.com/w40/gb.png',
+  'Esteban Ocon': 'https://flagcdn.com/w40/fr.png',
+  'Oliver Bearman': 'https://flagcdn.com/w40/gb.png',
+  'Nico Hülkenberg': 'https://flagcdn.com/w40/de.png',
+  'Gabriel Bortoleto': 'https://flagcdn.com/w40/br.png',
+  'Lando Norris': 'https://flagcdn.com/w40/gb.png',
+  'Oscar Piastri': 'https://flagcdn.com/w40/au.png',
+  'George Russell': 'https://flagcdn.com/w40/gb.png',
+  'Andrea Kimi Antonelli': 'https://flagcdn.com/w40/it.png',
+  'Kimi Antonelli': 'https://flagcdn.com/w40/it.png',
+  'Yuki Tsunoda': 'https://flagcdn.com/w40/jp.png',
+  'Isack Hadjar': 'https://flagcdn.com/w40/fr.png',
+  'Max Verstappen': 'https://flagcdn.com/w40/nl.png',
+  'Liam Lawson': 'https://flagcdn.com/w40/nz.png',
+  'Alexander Albon': 'https://flagcdn.com/w40/th.png',
+  'Carlos Sainz Jr.': 'https://flagcdn.com/w40/es.png',
+  'Carlos Sainz': 'https://flagcdn.com/w40/es.png',
+  'Nico Hulkenberg': 'https://flagcdn.com/w40/de.png',
+};
+
 export const PENALTY_TYPES: Record<number, string> = {
   0: 'Drive Through',
   1: 'Stop Go',

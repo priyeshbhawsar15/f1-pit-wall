@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Flag, Plus, Trash2, Trophy, TrendingUp, Zap } from 'lucide-react';
+import { Flag, Plus, Trash2, Trophy, TrendingUp, Zap } from 'lucide-react';
 import { TRACK_NAMES, SESSION_TYPES } from '@/lib/constants';
 import { formatLapTime } from '@/lib/utils';
+import AppHeader from '@/components/AppHeader';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 interface SeasonDetail {
   id: string; name: string; isActive: boolean; startDate: string | null; endDate: string | null;
@@ -87,15 +87,16 @@ function ChampionshipPredictor({ standings, completedRaces }: { standings: Playe
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
       <div className="card p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>
+          <h3 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>
             Championship Predictor
           </h3>
           <div className="flex items-center gap-2">
-            <span className="text-[9px] text-[var(--muted-foreground)]" style={F1_FONT}>Remaining races:</span>
+            <span className="text-[9px] text-[var(--muted-foreground)]" style={BMW_FONT}>Remaining races:</span>
             <input
               type="number" min={1} max={30} value={extraRaces}
               onChange={(e) => setExtraRaces(Math.max(1, parseInt(e.target.value) || 1))}
-              className="w-12 bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-2 py-0.5 text-xs text-center focus:outline-none focus:border-[var(--accent)]"
+              className="w-12 bg-[var(--surface)] border border-[var(--card-border)] px-2 py-0.5 text-xs text-center focus:outline-none focus:border-[var(--m-blue-dark)]"
+              style={{ borderRadius: 0 }}
             />
           </div>
         </div>
@@ -111,7 +112,7 @@ function ChampionshipPredictor({ standings, completedRaces }: { standings: Playe
                     <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black text-white" style={{ backgroundColor: p.color }}>
                       {p.name.charAt(0)}
                     </div>
-                    <span className="text-xs font-bold" style={F1_FONT}>{p.name}</span>
+                    <span className="text-xs font-bold" style={BMW_FONT}>{p.name}</span>
                   </div>
                   <div className="text-right">
                     <span className="text-xs font-black font-mono tabular-nums" style={{ color: p.color }}>{p.projected}</span>
@@ -119,9 +120,9 @@ function ChampionshipPredictor({ standings, completedRaces }: { standings: Playe
                     <span className="text-[9px] text-[var(--muted-foreground)] ml-2">({p.points} now)</span>
                   </div>
                 </div>
-                <div className="h-1.5 bg-[var(--surface)] rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[var(--surface)] overflow-hidden" style={{ borderRadius: 0 }}>
                   <motion.div
-                    className="h-full rounded-full"
+                    className="h-full"
                     style={{ backgroundColor: p.color }}
                     initial={{ width: 0 }}
                     animate={{ width: `${barWidth}%` }}
@@ -178,7 +179,7 @@ export default function SeasonDetailPage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -197,18 +198,18 @@ export default function SeasonDetailPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="red-bar" />
-      <header className="f1-header flex items-center gap-3 px-6 py-3">
-        <Link href="/seasons" className="text-[var(--muted-foreground)] hover:text-white transition-colors">
-          <ArrowLeft size={16} />
-        </Link>
-        <div className="divider-v" />
-        <span className="f1-logo-text">F1</span>
-        <span className="font-bold text-sm" style={F1_FONT}>{season.name}</span>
-        {season.isActive && (
-          <span className="pill pill-live text-[8px]"><span className="live-dot" /> ACTIVE</span>
-        )}
-      </header>
+      <AppHeader
+        title="SEASON"
+        backHref="/seasons"
+        meta={
+          <>
+            <span className="font-bold text-[var(--foreground)]" style={BMW_FONT}>{season.name}</span>
+            {season.isActive && (
+              <span className="pill pill-live text-[8px]"><span className="live-dot" /> ACTIVE</span>
+            )}
+          </>
+        }
+      />
 
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {/* Summary bar */}
@@ -222,7 +223,7 @@ export default function SeasonDetailPage() {
               {stat.icon}
               <div>
                 <div className="text-xl font-black font-mono">{stat.value}</div>
-                <div className="text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>{stat.label}</div>
+                <div className="text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>{stat.label}</div>
               </div>
             </div>
           ))}
@@ -230,7 +231,7 @@ export default function SeasonDetailPage() {
 
         {/* Standings */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={F1_FONT}>Driver Standings</h2>
+          <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={BMW_FONT}>Driver Standings</h2>
           {standings.length === 0 ? (
             <div className="card p-8 text-center">
               <Trophy size={24} className="text-[var(--muted)] mx-auto mb-2" />
@@ -241,17 +242,17 @@ export default function SeasonDetailPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-[var(--card-border)]">
-                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] w-8" style={F1_FONT}>#</th>
-                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Driver</th>
+                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] w-8" style={BMW_FONT}>#</th>
+                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Driver</th>
                     {season.races.map((r) => (
                       <th key={r.session.id} className="text-center px-2 py-2 text-[8px] text-[var(--muted-foreground)] max-w-[40px]" title={TRACK_NAMES[r.session.trackId]}>
                         {(TRACK_NAMES[r.session.trackId] || '?').slice(0, 3).toUpperCase()}
                       </th>
                     ))}
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--yellow)]" style={F1_FONT}>PTS</th>
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-yellow-400" style={F1_FONT}>W</th>
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--green)]" style={F1_FONT}>OVT</th>
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--purple)]" style={F1_FONT}>FL</th>
+                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--yellow)]" style={BMW_FONT}>PTS</th>
+                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-yellow-400" style={BMW_FONT}>W</th>
+                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--green)]" style={BMW_FONT}>OVT</th>
+                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--purple)]" style={BMW_FONT}>FL</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -266,7 +267,7 @@ export default function SeasonDetailPage() {
                             <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-[10px] font-black text-white" style={{ backgroundColor: p.color }}>
                               {p.name.charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-bold" style={F1_FONT}>{p.name}</span>
+                            <span className="font-bold" style={BMW_FONT}>{p.name}</span>
                           </div>
                         </td>
                         {season.races.map((r) => {
@@ -303,9 +304,9 @@ export default function SeasonDetailPage() {
         {/* Race list */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Races ({totalRaces})</h2>
+            <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Races ({totalRaces})</h2>
             <button onClick={() => setShowAddRace(!showAddRace)}
-              className="flex items-center gap-1 text-[9px] bg-[var(--surface)] hover:bg-[var(--surface-hover)] px-2 py-1 rounded-sm transition-colors" style={F1_FONT}>
+              className="flex items-center gap-1 text-[9px] bg-[var(--surface)] hover:bg-[var(--surface-hover)] px-2 py-1 rounded-sm transition-colors" style={BMW_FONT}>
               <Plus size={10} /> Add Race
             </button>
           </div>
@@ -313,7 +314,7 @@ export default function SeasonDetailPage() {
           {showAddRace && unlinkedSessions.length > 0 && (
             <motion.div className="card p-3 mb-3 space-y-1 max-h-48 overflow-y-auto"
               initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-              <p className="text-[9px] text-[var(--muted-foreground)] mb-2" style={F1_FONT}>Select a session to add:</p>
+              <p className="text-[9px] text-[var(--muted-foreground)] mb-2" style={BMW_FONT}>Select a session to add:</p>
               {unlinkedSessions.map((s: any) => (
                 <button key={s.id} onClick={() => addRace(s.id)} disabled={addingId === s.id}
                   className="w-full flex items-center justify-between px-3 py-2 rounded-sm bg-[var(--surface)] hover:bg-[var(--surface-hover)] transition-colors text-left">
@@ -331,8 +332,8 @@ export default function SeasonDetailPage() {
             {season.races.map((r, i) => (
               <motion.div key={r.session.id} className="card p-3 flex items-center gap-3 group"
                 initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
-                <div className="w-8 h-8 rounded-sm bg-[var(--accent-glow)] flex items-center justify-center flex-shrink-0">
-                  <span className="text-[9px] font-black text-[var(--accent)]">{i + 1}</span>
+                <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 bg-[var(--surface-elevated)]" style={{ borderRadius: 0 }}>
+                  <span className="text-[9px] font-black text-[var(--foreground)]">{i + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm">{TRACK_NAMES[r.session.trackId] || `Track ${r.session.trackId}`}</div>

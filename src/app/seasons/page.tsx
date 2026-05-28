@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, History, Users, Plus, Trash2, ChevronRight, Flag, Calendar, CheckCircle2, X, Check } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, Flag, Calendar, CheckCircle2, X, Check } from 'lucide-react';
 import { TRACK_NAMES, SESSION_TYPES } from '@/lib/constants';
+import AppHeader from '@/components/AppHeader';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 interface Season {
   id: string; name: string; startDate: string | null; endDate: string | null;
@@ -64,36 +65,36 @@ function CreateSeasonModal({ onClose, onCreated }: { onClose: () => void; onCrea
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 text-[var(--muted)] hover:text-white"><X size={16} /></button>
-        <h2 className="text-sm font-bold mb-4" style={F1_FONT}>{preview ? 'Add Existing Races?' : 'New Season'}</h2>
+        <h2 className="text-sm font-bold mb-4" style={BMW_FONT}>{preview ? 'Add Existing Races?' : 'New Season'}</h2>
 
         {!preview ? (
           <>
-            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>Season Name</label>
+            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>Season Name</label>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. 2025 Championship"
-              className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-2 text-sm mb-4 focus:outline-none focus:border-[var(--accent)]" />
+              className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-2 text-sm mb-4 focus:outline-none focus:border-[var(--m-blue-dark)]" />
 
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
-                <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>Start Date</label>
+                <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>Start Date</label>
                 <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-2 py-1.5 text-xs focus:outline-none focus:border-[var(--accent)]" />
+                  className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-2 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]" />
               </div>
               <div>
-                <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>End Date</label>
+                <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>End Date</label>
                 <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-2 py-1.5 text-xs focus:outline-none focus:border-[var(--accent)]" />
+                  className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-2 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]" />
               </div>
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer mb-5">
               <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)}
-                className="w-4 h-4 accent-[var(--accent)]" />
+                className="w-4 h-4 accent-[var(--m-red)]" />
               <span className="text-xs text-[var(--foreground)]">Active season (auto-add new races)</span>
             </label>
 
             <button onClick={handleCreate} disabled={!name.trim() || saving}
-              className="w-full bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-40 text-white text-sm font-bold py-2 rounded-sm transition-colors flex items-center justify-center gap-2"
-              style={F1_FONT}>
+              className="w-full bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 disabled:opacity-40 text-white text-sm font-bold py-2 rounded-sm transition-colors flex items-center justify-center gap-2"
+              style={BMW_FONT}>
               <Check size={14} /> Create Season
             </button>
           </>
@@ -110,7 +111,7 @@ function CreateSeasonModal({ onClose, onCreated }: { onClose: () => void; onCrea
                       const next = new Set(selectedIds);
                       e.target.checked ? next.add(s.id) : next.delete(s.id);
                       setSelectedIds(next);
-                    }} className="w-4 h-4 accent-[var(--accent)]" />
+                    }} className="w-4 h-4 accent-[var(--m-red)]" />
                   <div>
                     <div className="text-xs font-semibold">{TRACK_NAMES[s.trackId] || `Track ${s.trackId}`}</div>
                     <div className="text-[10px] text-[var(--muted-foreground)]">
@@ -122,11 +123,11 @@ function CreateSeasonModal({ onClose, onCreated }: { onClose: () => void; onCrea
             </div>
             <div className="flex gap-2">
               <button onClick={() => { onCreated(); onClose(); }}
-                className="flex-1 bg-[var(--surface)] text-xs py-2 rounded-sm hover:bg-[var(--surface-hover)] transition-colors" style={F1_FONT}>
+                className="flex-1 bg-[var(--surface)] text-xs py-2 rounded-sm hover:bg-[var(--surface-hover)] transition-colors" style={BMW_FONT}>
                 Skip
               </button>
               <button onClick={handleConfirmAdd} disabled={selectedIds.size === 0 || saving}
-                className="flex-1 bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-40 text-white text-xs font-bold py-2 rounded-sm transition-colors" style={F1_FONT}>
+                className="flex-1 bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 disabled:opacity-40 text-white text-xs font-bold py-2 rounded-sm transition-colors" style={BMW_FONT}>
                 Add {selectedIds.size} Race{selectedIds.size !== 1 ? 's' : ''}
               </button>
             </div>
@@ -168,32 +169,23 @@ export default function SeasonsPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="red-bar" />
-      <header className="f1-header flex items-center gap-3 px-6 py-3">
-        <span className="f1-logo-text">F1</span>
-        <span className="text-[10px] font-bold text-[var(--muted-foreground)] tracking-[0.15em] uppercase" style={F1_FONT}>Seasons</span>
-        <div className="ml-auto flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-white transition-colors"><Radio size={12} /> Live</Link>
-          <Link href="/standings" className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-white transition-colors"><Flag size={12} /> Standings</Link>
-          <Link href="/players" className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-white transition-colors"><Users size={12} /> Players</Link>
-        </div>
-      </header>
+      <AppHeader title="SEASONS" />
 
       <div className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold" style={F1_FONT}>Seasons</h1>
+            <h1 className="text-xl font-bold" style={BMW_FONT}>Seasons</h1>
             <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{seasons.length} seasons</p>
           </div>
           <button onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors" style={F1_FONT}>
+            className="flex items-center gap-2 bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors" style={BMW_FONT}>
             <Plus size={13} /> New Season
           </button>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : seasons.length === 0 ? (
           <div className="card p-12 text-center">
@@ -201,7 +193,7 @@ export default function SeasonsPage() {
             <h3 className="text-lg font-semibold mb-1">No seasons yet</h3>
             <p className="text-sm text-[var(--muted-foreground)] mb-4">Create a season to group races and track standings over time.</p>
             <button onClick={() => setShowCreate(true)}
-              className="inline-flex items-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors" style={F1_FONT}>
+              className="inline-flex items-center gap-2 bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors" style={BMW_FONT}>
               <Plus size={13} /> Create First Season
             </button>
           </div>
@@ -213,7 +205,7 @@ export default function SeasonsPage() {
                 <div className="flex items-center gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm" style={F1_FONT}>{s.name}</span>
+                      <span className="font-bold text-sm" style={BMW_FONT}>{s.name}</span>
                       {s.isActive && (
                         <span className="pill pill-live text-[8px] px-1.5 py-0.5">
                           <span className="live-dot" /> ACTIVE
@@ -230,7 +222,7 @@ export default function SeasonsPage() {
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => toggleActive(s)}
                       className="text-[9px] px-2 py-1 rounded-sm bg-[var(--surface)] hover:bg-[var(--surface-hover)] transition-colors flex items-center gap-1"
-                      style={F1_FONT}>
+                      style={BMW_FONT}>
                       <CheckCircle2 size={10} className={s.isActive ? 'text-[var(--green)]' : 'text-[var(--muted)]'} />
                       {s.isActive ? 'Deactivate' : 'Activate'}
                     </button>
@@ -240,8 +232,8 @@ export default function SeasonsPage() {
                     </button>
                   </div>
 
-                  <Link href={`/seasons/${s.id}`} className="flex items-center gap-1 text-[var(--muted)] hover:text-[var(--accent)] transition-colors flex-shrink-0">
-                    <span className="text-[10px]" style={F1_FONT}>View</span>
+                  <Link href={`/seasons/${s.id}`} className="flex items-center gap-1 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors flex-shrink-0">
+                    <span className="text-[10px]" style={BMW_FONT}>View</span>
                     <ChevronRight size={14} />
                   </Link>
                 </div>

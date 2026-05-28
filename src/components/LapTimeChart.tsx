@@ -7,7 +7,7 @@ import { formatLapTime } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 export default function LapTimeChart() {
   const lapHistory = useTelemetryStore((s) => s.lapHistory);
@@ -41,14 +41,14 @@ export default function LapTimeChart() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload) return null;
     return (
-      <div className="bg-[#1a1a1a] border border-[var(--card-border)] rounded-lg px-3 py-2 shadow-xl">
+      <div className="bg-[#1a1a1a] border border-[var(--card-border)] rounded-none px-3 py-2" style={{ borderRadius: 0 }}>
         <p className="text-xs font-semibold mb-1">Lap {label}</p>
         {payload.map((p: any) => {
           const carIdx = parseInt(p.dataKey.replace('car_', ''), 10);
           const driver = drivers.find((d) => d.i === carIdx);
           return (
             <p key={p.dataKey} className="text-[11px] flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: p.stroke }} />
+              <span className="w-2 h-2 inline-block" style={{ backgroundColor: p.stroke, borderRadius: 0 }} />
               <span className="text-[var(--muted-foreground)]">{driver?.name || `Car ${carIdx}`}</span>
               <span className="font-mono ml-auto">{formatLapTime(p.value)}</span>
             </p>
@@ -71,7 +71,7 @@ export default function LapTimeChart() {
       </div>
       <div className="p-3 h-64">
         {chartData.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-[10px] text-[var(--muted-foreground)]" style={F1_FONT}>
+          <div className="flex items-center justify-center h-full text-[10px] text-[var(--muted-foreground)]" style={BMW_FONT}>
             WAITING FOR LAP DATA
           </div>
         ) : (

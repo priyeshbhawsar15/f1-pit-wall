@@ -6,7 +6,7 @@ import { Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MAX_ERS_STORE = 4000000;
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 export default function ERSMonitor() {
   const selectedCarIndex = useTelemetryStore((s) => s.selectedCarIndex);
@@ -19,12 +19,12 @@ export default function ERSMonitor() {
 
   const modeColor: Record<string, string> = {
     None: 'var(--muted)',
-    Medium: 'var(--blue)',
-    Hotlap: 'var(--yellow)',
-    Overtake: 'var(--green)',
+    Medium: 'var(--m-blue-dark)',
+    Hotlap: 'var(--warning)',
+    Overtake: 'var(--success)',
   };
 
-  const barColor = storePct > 50 ? 'var(--green)' : storePct > 20 ? 'var(--yellow)' : 'var(--f1-red)';
+  const barColor = storePct > 50 ? 'var(--success)' : storePct > 20 ? 'var(--warning)' : 'var(--m-red)';
 
   return (
     <motion.div
@@ -35,24 +35,24 @@ export default function ERSMonitor() {
     >
       <div className="card-header">
         <span className="card-title">ERS</span>
-        <Zap size={11} className="text-[var(--yellow)]" />
+        <Zap size={11} className="text-[var(--warning)]" />
       </div>
 
-      <div className="p-3 space-y-3">
+      <div className="p-5 space-y-4">
         {/* Energy store bar */}
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[9px] text-[var(--muted-foreground)] uppercase tracking-wider" style={F1_FONT}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider" style={BMW_FONT}>
               Energy Store
             </span>
-            <span className="text-xs font-mono font-bold tabular-nums">
-              {status ? (status.ersStore / 1000000).toFixed(2) : '-.--'} <span className="text-[8px] text-[var(--muted)]">MJ</span>
+            <span className="text-sm font-mono font-bold tabular-nums">
+              {status ? (status.ersStore / 1000000).toFixed(2) : '-.--'} <span className="text-[10px] text-[var(--muted)]">MJ</span>
             </span>
           </div>
-          <div className="h-3 bg-[var(--surface)] rounded-sm overflow-hidden">
+          <div className="h-2 bg-[var(--surface)] overflow-hidden" style={{ borderRadius: 0 }}>
             <motion.div
-              className="h-full rounded-sm"
-              style={{ backgroundColor: barColor }}
+              className="h-full"
+              style={{ backgroundColor: barColor, borderRadius: 0 }}
               animate={{ width: `${storePct}%` }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
             />
@@ -61,7 +61,7 @@ export default function ERSMonitor() {
 
         {/* Deploy mode badge */}
         <div className="flex items-center justify-between">
-          <span className="text-[9px] text-[var(--muted-foreground)] uppercase tracking-wider" style={F1_FONT}>
+          <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider" style={BMW_FONT}>
             Deploy Mode
           </span>
           <AnimatePresence mode="wait">
@@ -71,10 +71,10 @@ export default function ERSMonitor() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
               transition={{ duration: 0.15 }}
-              className="flex items-center gap-1.5"
+              className="flex items-center gap-2"
             >
-              <Zap size={11} style={{ color: modeColor[deployMode] || 'var(--muted)' }} />
-              <span className="text-[10px] font-bold uppercase" style={{ ...F1_FONT, color: modeColor[deployMode] || 'var(--muted)' }}>
+              <Zap size={12} style={{ color: modeColor[deployMode] || 'var(--muted)' }} />
+              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ ...BMW_FONT, color: modeColor[deployMode] || 'var(--muted)' }}>
                 {deployMode}
               </span>
             </motion.div>
@@ -82,17 +82,17 @@ export default function ERSMonitor() {
         </div>
 
         {/* Power grid */}
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-2 gap-2">
           {[
             { label: 'ICE', value: status ? `${(status.iceW / 1000).toFixed(0)}` : '---', unit: 'kW' },
             { label: 'MGU-K', value: status ? `${(status.mgukW / 1000).toFixed(0)}` : '---', unit: 'kW' },
-            { label: 'K Harvest', value: status ? (status.ersK / 1000000).toFixed(3) : '-.---', unit: 'MJ', color: 'var(--green)' },
-            { label: 'H Harvest', value: status ? (status.ersH / 1000000).toFixed(3) : '-.---', unit: 'MJ', color: 'var(--green)' },
+            { label: 'K Harvest', value: status ? (status.ersK / 1000000).toFixed(3) : '-.---', unit: 'MJ', color: 'var(--success)' },
+            { label: 'H Harvest', value: status ? (status.ersH / 1000000).toFixed(3) : '-.---', unit: 'MJ', color: 'var(--success)' },
           ].map((item) => (
             <div key={item.label} className="stat-block">
-              <div className="text-[8px] text-[var(--muted-foreground)] uppercase tracking-wider" style={F1_FONT}>{item.label}</div>
-              <div className="text-xs font-mono font-bold tabular-nums" style={item.color ? { color: item.color } : undefined}>
-                {item.value} <span className="text-[8px] text-[var(--muted)]">{item.unit}</span>
+              <div className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider mb-1" style={BMW_FONT}>{item.label}</div>
+              <div className="text-[13px] font-mono font-bold tabular-nums" style={item.color ? { color: item.color } : undefined}>
+                {item.value} <span className="text-[10px] text-[var(--muted)]">{item.unit}</span>
               </div>
             </div>
           ))}
@@ -100,11 +100,11 @@ export default function ERSMonitor() {
 
         {/* Deployed this lap */}
         <div className="stat-block flex items-center justify-between">
-          <span className="text-[8px] text-[var(--muted-foreground)] uppercase tracking-wider" style={F1_FONT}>
+          <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider" style={BMW_FONT}>
             Deployed
           </span>
-          <span className="text-xs font-mono font-bold text-[var(--f1-red)] tabular-nums">
-            {status ? (status.ersDeployed / 1000000).toFixed(3) : '-.---'} <span className="text-[8px] text-[var(--muted)]">MJ</span>
+          <span className="text-[13px] font-mono font-bold text-[var(--m-red)] tabular-nums">
+            {status ? (status.ersDeployed / 1000000).toFixed(3) : '-.---'} <span className="text-[10px] text-[var(--muted)]">MJ</span>
           </span>
         </div>
       </div>

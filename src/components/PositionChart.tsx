@@ -6,7 +6,7 @@ import { TEAM_COLORS } from '@/lib/constants';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 export default function PositionChart() {
   const positionHistory = useTelemetryStore((s) => s.positionHistory);
@@ -40,14 +40,14 @@ export default function PositionChart() {
     if (!active || !payload) return null;
     const sorted = [...payload].sort((a: any, b: any) => a.value - b.value);
     return (
-      <div className="bg-[#1a1a1a] border border-[var(--card-border)] rounded-lg px-3 py-2 shadow-xl max-h-64 overflow-y-auto">
+      <div className="bg-[#1a1a1a] border border-[var(--card-border)] rounded-none px-3 py-2 max-h-64 overflow-y-auto" style={{ borderRadius: 0 }}>
         <p className="text-xs font-semibold mb-1.5 text-[var(--muted-foreground)]">Lap {label}</p>
         {sorted.map((p: any) => {
           const carIdx = parseInt(p.dataKey.replace('car_', ''), 10);
           const driver = drivers.find((d) => d.i === carIdx);
           return (
             <div key={p.dataKey} className="text-[11px] flex items-center gap-2 py-0.5">
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: p.stroke }} />
+              <span className="w-2 h-2 flex-shrink-0" style={{ backgroundColor: p.stroke, borderRadius: 0 }} />
               <span className="font-mono w-5 text-right font-bold">P{p.value}</span>
               <span className="text-[var(--muted-foreground)] truncate">{driver?.name || `Car ${carIdx}`}</span>
             </div>
@@ -69,7 +69,7 @@ export default function PositionChart() {
       </div>
       <div className="p-3 h-64">
         {chartData.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-[10px] text-[var(--muted-foreground)]" style={F1_FONT}>
+          <div className="flex items-center justify-center h-full text-[10px] text-[var(--muted-foreground)]" style={BMW_FONT}>
             WAITING FOR POSITION DATA
           </div>
         ) : (

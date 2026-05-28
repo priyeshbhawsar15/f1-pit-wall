@@ -2,13 +2,13 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Swords, Trophy, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
+import { Swords, Trophy, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
 import { TRACK_NAMES, SESSION_TYPES } from '@/lib/constants';
 import { formatLapTime } from '@/lib/utils';
+import AppHeader from '@/components/AppHeader';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 interface Profile { id: string; name: string; color: string; avatarUrl: string | null; }
 
@@ -28,9 +28,9 @@ function Bar({ valueA, valueB, colorA, colorB }: { valueA: number; valueB: numbe
   const total = valueA + valueB || 1;
   const pctA = (valueA / total) * 100;
   return (
-    <div className="flex h-2 rounded-full overflow-hidden gap-px">
-      <div className="transition-all duration-500 rounded-l-full" style={{ width: `${pctA}%`, backgroundColor: colorA }} />
-      <div className="transition-all duration-500 rounded-r-full flex-1" style={{ backgroundColor: colorB }} />
+    <div className="flex h-2 overflow-hidden gap-px" style={{ borderRadius: 0 }}>
+      <div className="transition-all duration-500" style={{ width: `${pctA}%`, backgroundColor: colorA }} />
+      <div className="transition-all duration-500 flex-1" style={{ backgroundColor: colorB }} />
     </div>
   );
 }
@@ -70,26 +70,16 @@ function H2HContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="red-bar" />
-      <header className="f1-header flex items-center gap-3 px-6 py-3">
-        <Link href="/players" className="text-[var(--muted-foreground)] hover:text-white transition-colors">
-          <ArrowLeft size={16} />
-        </Link>
-        <div className="divider-v" />
-        <span className="f1-logo-text">F1</span>
-        <span className="text-[10px] font-bold text-[var(--muted-foreground)] tracking-[0.15em] uppercase" style={F1_FONT}>
-          Head-to-Head
-        </span>
-      </header>
+      <AppHeader title="HEAD-TO-HEAD" backHref="/players" />
 
       <div className="max-w-3xl mx-auto p-6 space-y-6">
         {/* Selector */}
         <motion.div className="card p-5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
             <div>
-              <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>Player A</label>
+              <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>Player A</label>
               <select value={selectedA} onChange={(e) => setSelectedA(e.target.value)}
-                className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]">
+                className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-[var(--m-blue-dark)]">
                 <option value="">Select player…</option>
                 {profiles.filter((p) => p.id !== selectedB).map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -97,13 +87,13 @@ function H2HContent() {
               </select>
             </div>
             <div className="flex flex-col items-center gap-1 mt-4">
-              <Swords size={20} className="text-[var(--accent)]" />
-              <span className="text-[9px] text-[var(--muted-foreground)] font-bold" style={F1_FONT}>VS</span>
+              <Swords size={20} className="text-[var(--m-red)]" />
+              <span className="text-[9px] text-[var(--muted-foreground)] font-bold" style={BMW_FONT}>VS</span>
             </div>
             <div>
-              <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>Player B</label>
+              <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>Player B</label>
               <select value={selectedB} onChange={(e) => setSelectedB(e.target.value)}
-                className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]">
+                className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-2 text-sm focus:outline-none focus:border-[var(--m-blue-dark)]">
                 <option value="">Select player…</option>
                 {profiles.filter((p) => p.id !== selectedA).map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -112,8 +102,8 @@ function H2HContent() {
             </div>
           </div>
           <button onClick={loadH2H} disabled={!selectedA || !selectedB || selectedA === selectedB || loading}
-            className="mt-4 w-full bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-40 text-white text-sm font-bold py-2 rounded-sm transition-colors flex items-center justify-center gap-2"
-            style={F1_FONT}>
+            className="mt-4 w-full bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 disabled:opacity-40 text-white text-sm font-bold py-2 rounded-sm transition-colors flex items-center justify-center gap-2"
+            style={BMW_FONT}>
             <Swords size={14} /> {loading ? 'Loading…' : 'Compare'}
           </button>
         </motion.div>
@@ -126,16 +116,16 @@ function H2HContent() {
                 <div className="flex items-center gap-3">
                   <Avatar profile={profileA} size={14} />
                   <div>
-                    <div className="font-black text-lg" style={{ ...F1_FONT, color: profileA.color }}>{profileA.name}</div>
+                    <div className="font-black text-lg" style={{ ...BMW_FONT, color: profileA.color }}>{profileA.name}</div>
                     <div className="text-[10px] text-[var(--muted-foreground)]">{data.stats.a.wins}W · {data.stats.a.points}pts</div>
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-[var(--muted-foreground)]" style={F1_FONT}>{data.sharedRaces} shared races</div>
+                  <div className="text-xs text-[var(--muted-foreground)]" style={BMW_FONT}>{data.sharedRaces} shared races</div>
                 </div>
                 <div className="flex items-center gap-3 justify-end text-right">
                   <div>
-                    <div className="font-black text-lg" style={{ ...F1_FONT, color: profileB.color }}>{profileB.name}</div>
+                    <div className="font-black text-lg" style={{ ...BMW_FONT, color: profileB.color }}>{profileB.name}</div>
                     <div className="text-[10px] text-[var(--muted-foreground)]">{data.stats.b.wins}W · {data.stats.b.points}pts</div>
                   </div>
                   <Avatar profile={profileB} size={14} />
@@ -152,14 +142,14 @@ function H2HContent() {
               <>
                 {/* Stat bars */}
                 <motion.div className="card p-5 space-y-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                  <h3 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Comparison</h3>
+                  <h3 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Comparison</h3>
                   {STAT_ROWS.map((row) => (
                     <div key={row.label}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-mono text-sm font-bold tabular-nums" style={{ color: row.a > row.b ? profileA.color : row.a === row.b ? 'var(--muted-foreground)' : 'var(--muted-foreground)' }}>{row.a}</span>
                         <div className="flex items-center gap-1.5">
                           {row.icon}
-                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>{row.label}</span>
+                          <span className="text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>{row.label}</span>
                         </div>
                         <span className="font-mono text-sm font-bold tabular-nums" style={{ color: row.b > row.a ? profileB.color : 'var(--muted-foreground)' }}>{row.b}</span>
                       </div>
@@ -177,10 +167,10 @@ function H2HContent() {
                     <table className="w-full text-xs">
                       <thead>
                         <tr className="border-b border-[var(--card-border)]">
-                          <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Track</th>
-                          <th className="text-center px-3 py-2 text-[9px]" style={{ ...F1_FONT, color: profileA.color }}>{profileA.name}</th>
-                          <th className="text-center px-3 py-2 text-[9px]" style={{ ...F1_FONT, color: profileB.color }}>{profileB.name}</th>
-                          <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Winner</th>
+                          <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Track</th>
+                          <th className="text-center px-3 py-2 text-[9px]" style={{ ...BMW_FONT, color: profileA.color }}>{profileA.name}</th>
+                          <th className="text-center px-3 py-2 text-[9px]" style={{ ...BMW_FONT, color: profileB.color }}>{profileB.name}</th>
+                          <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Winner</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -226,7 +216,7 @@ function H2HContent() {
 
 export default function H2HPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" /></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="w-8 h-8 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin" /></div>}>
       <H2HContent />
     </Suspense>
   );

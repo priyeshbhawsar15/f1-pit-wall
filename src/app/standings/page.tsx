@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Radio, History, Trophy, Zap, AlertTriangle, TrendingUp, Users, Filter } from 'lucide-react';
+import { Trophy, Zap, AlertTriangle, TrendingUp, Filter } from 'lucide-react';
 import { formatLapTime } from '@/lib/utils';
+import AppHeader from '@/components/AppHeader';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 interface Season { id: string; name: string; isActive: boolean; }
 interface PlayerStanding {
@@ -59,28 +59,17 @@ export default function StandingsPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="red-bar" />
-      <header className="f1-header flex items-center gap-3 px-6 py-3">
-        <span className="f1-logo-text">F1</span>
-        <span className="text-[10px] font-bold text-[var(--muted-foreground)] tracking-[0.15em] uppercase" style={F1_FONT}>
-          Standings
-        </span>
-        <div className="ml-auto flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-white transition-colors"><Radio size={12} /> Live</Link>
-          <Link href="/sessions" className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-white transition-colors"><History size={12} /> History</Link>
-          <Link href="/players" className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-white transition-colors"><Users size={12} /> Players</Link>
-        </div>
-      </header>
+      <AppHeader title="STANDINGS" />
 
       <div className="max-w-6xl mx-auto p-6">
         {/* Filters */}
         <motion.div className="card p-4 mb-6 flex flex-wrap items-end gap-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <div>
-            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>Season</label>
+            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>Season</label>
             <select
               value={seasonId}
               onChange={(e) => setSeasonId(e.target.value)}
-              className="bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--accent)]"
+              className="bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]"
             >
               <option value="">All Sessions</option>
               {seasons.map((s) => (
@@ -89,19 +78,19 @@ export default function StandingsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>From</label>
+            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>From</label>
             <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-              className="bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--accent)]" />
+              className="bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]" />
           </div>
           <div>
-            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>To</label>
+            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>To</label>
             <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-              className="bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--accent)]" />
+              className="bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]" />
           </div>
           <button
             onClick={loadStandings}
-            className="flex items-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-white text-xs font-bold px-4 py-1.5 rounded-sm transition-colors"
-            style={F1_FONT}
+            className="flex items-center gap-2 bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 text-white text-xs font-bold px-4 py-1.5 rounded-sm transition-colors"
+            style={BMW_FONT}
           >
             <Filter size={12} /> Apply
           </button>
@@ -112,7 +101,7 @@ export default function StandingsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : standings.length === 0 ? (
           <div className="card p-12 text-center">
@@ -132,13 +121,13 @@ export default function StandingsPage() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-[var(--card-border)]">
-                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] w-8" style={F1_FONT}>#</th>
-                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Driver</th>
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Races</th>
+                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] w-8" style={BMW_FONT}>#</th>
+                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Driver</th>
+                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Races</th>
                     {COLUMNS.map((c) => (
-                      <th key={c.key} className="text-center px-3 py-2 text-[9px] uppercase tracking-wider" style={{ ...F1_FONT, color: c.color || 'var(--muted-foreground)' }}>{c.label}</th>
+                      <th key={c.key} className="text-center px-3 py-2 text-[9px] uppercase tracking-wider" style={{ ...BMW_FONT, color: c.color || 'var(--muted-foreground)' }}>{c.label}</th>
                     ))}
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>Best Lap</th>
+                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Best Lap</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -166,7 +155,7 @@ export default function StandingsPage() {
                                 ? <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" />
                                 : p.name.charAt(0).toUpperCase()}
                             </div>
-                            <span className="font-bold" style={F1_FONT}>{p.name}</span>
+                            <span className="font-bold" style={BMW_FONT}>{p.name}</span>
                           </div>
                         </td>
                         <td className="px-3 py-3 text-center text-[var(--muted-foreground)] font-mono">{p.stats.races}</td>
@@ -201,8 +190,8 @@ export default function StandingsPage() {
               { label: 'Fastest Lap', icon: <Zap size={14} className="text-[var(--purple)]" />, value: [...standings].filter(s => s.stats.bestLapMs).sort((a,b) => (a.stats.bestLapMs||0) - (b.stats.bestLapMs||0))[0]?.name, sub: [...standings].filter(s => s.stats.bestLapMs).sort((a,b) => (a.stats.bestLapMs||0) - (b.stats.bestLapMs||0))[0]?.stats.bestLapMs ? formatLapTime([...standings].filter(s => s.stats.bestLapMs).sort((a,b) => (a.stats.bestLapMs||0) - (b.stats.bestLapMs||0))[0].stats.bestLapMs!) : '—' },
             ].map((card, i) => (
               <motion.div key={card.label} className="card p-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.05 }}>
-                <div className="flex items-center gap-2 mb-2">{card.icon}<span className="text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>{card.label}</span></div>
-                <div className="font-bold text-sm truncate" style={F1_FONT}>{card.value || '—'}</div>
+                <div className="flex items-center gap-2 mb-2">{card.icon}<span className="text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>{card.label}</span></div>
+                <div className="font-bold text-sm truncate" style={BMW_FONT}>{card.value || '—'}</div>
                 <div className="text-[10px] text-[var(--muted-foreground)] mt-0.5">{card.sub}</div>
               </motion.div>
             ))}

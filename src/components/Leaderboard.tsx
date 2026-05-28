@@ -1,7 +1,7 @@
 'use client';
 
 import { useTelemetryStore } from '@/stores/telemetryStore';
-import { TEAM_COLORS, TEAM_NAMES, VISUAL_TYRE_COMPOUNDS } from '@/lib/constants';
+import { TEAM_COLORS, TEAM_NAMES, VISUAL_TYRE_COMPOUNDS, DRIVER_FLAGS, TEAM_LOGOS } from '@/lib/constants';
 import { formatLapTime, formatGap } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -70,27 +70,35 @@ export default function Leaderboard() {
                   x: { duration: 0.2 },
                 }}
                 onClick={() => setSelectedCarIndex(car.i)}
-                className={`flex items-center gap-2 px-2.5 py-[6px] cursor-pointer border-b border-[var(--card-border)] transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[var(--hairline-strong)] transition-colors ${
                   battlingHumans.has(car.i)
-                    ? 'bg-[var(--yellow)]/[0.06] border-l-2 border-l-[var(--yellow)]'
+                    ? 'bg-[var(--m-blue-light)]/[0.06] border-l-2 border-l-[var(--m-blue-light)]'
                     : isSelected
-                    ? 'bg-white/[0.06]'
-                    : 'hover:bg-white/[0.03]'
+                    ? 'bg-white/[0.05]'
+                    : 'hover:bg-white/[0.02]'
                 }`}
               >
                 {/* Team color stripe */}
-                <div className="team-stripe h-9" style={{ backgroundColor: teamColor }} />
+                <div className="team-stripe h-10" style={{ backgroundColor: teamColor }} />
 
-                {/* Position badge — F1 angular style */}
+                {/* Position badge */}
                 <div className={posClass(car.pos)}>
                   {car.pos}
                 </div>
 
                 {/* Driver name + team */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-bold truncate"
-                          style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>
+                  <div className="flex items-center gap-2">
+                    {driver?.name && DRIVER_FLAGS[driver.name] && (
+                      <img
+                        src={DRIVER_FLAGS[driver.name]}
+                        alt=""
+                        className="flex-shrink-0"
+                        style={{ width: 20, height: 13, objectFit: 'cover', borderRadius: 0 }}
+                      />
+                    )}
+                    <span className="text-[13px] font-bold truncate"
+                          style={{ fontFamily: "var(--font-ui)" }}>
                       {driver?.name || `Car ${car.i}`}
                     </span>
                     <AnimatePresence>
@@ -100,8 +108,8 @@ export default function Leaderboard() {
                           animate={{ scale: 1, opacity: 1 }}
                           exit={{ scale: 0, opacity: 0 }}
                           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                          className="text-[7px] font-bold px-1 py-0.5 rounded-sm uppercase tracking-wider bg-[var(--yellow)]/20 text-[var(--yellow)] border border-[var(--yellow)]/30"
-                          style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}
+                          className="text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-[1px] bg-[var(--m-blue-dark)]/20 text-[var(--m-blue-dark)] border border-[var(--m-blue-dark)]/30"
+                          style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}
                         >
                           HUMAN
                         </motion.span>
@@ -119,39 +127,48 @@ export default function Leaderboard() {
                       )}
                     </AnimatePresence>
                   </div>
-                  <span className="text-[9px] text-[var(--muted-foreground)]">
-                    {driver ? (TEAM_NAMES[driver.team] || '') : ''}
-                  </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {driver && TEAM_LOGOS[driver.team] && (
+                      <img
+                        src={TEAM_LOGOS[driver.team]}
+                        alt=""
+                        style={{ height: 11, width: 'auto', maxWidth: 40, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.5 }}
+                      />
+                    )}
+                    <span className="text-[10px] text-[var(--muted)]">
+                      {driver ? (TEAM_NAMES[driver.team] || '') : ''}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Tyre compound + age */}
                 {tyreInfo && (
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
                     <div
-                      className="w-[10px] h-[10px] rounded-full ring-1 ring-white/10"
-                      style={{ backgroundColor: tyreInfo.color }}
+                      className="w-[12px] h-[12px]"
+                      style={{ backgroundColor: tyreInfo.color, borderRadius: 0 }}
                     />
-                    <span className="text-[8px] text-[var(--muted)] w-3 text-center tabular-nums font-mono">
-                      {status?.tyreAge ?? ''}
+                    <span className="text-[10px] text-[var(--muted)] tabular-nums font-mono">
+                      {status?.tyreAge ?? ''}L
                     </span>
                   </div>
                 )}
 
                 {/* Gap + Last lap */}
-                <div className="text-right flex-shrink-0 w-[92px]">
-                  <div className="text-[10px] font-mono text-[var(--muted-foreground)] tabular-nums">
+                <div className="text-right flex-shrink-0 w-[96px]">
+                  <div className="text-[11px] font-mono text-[var(--muted)] tabular-nums">
                     {car.pos === 1 ? (
-                      <span className="text-[var(--foreground-secondary)]">INTERVAL</span>
+                      <span className="text-[var(--muted)] tracking-wider text-[10px]">INTERVAL</span>
                     ) : (
                       formatGap(car.dFront)
                     )}
                   </div>
                   <motion.div
                     key={car.lastLap}
-                    initial={{ color: '#00ff87' }}
+                    initial={{ color: '#0fa336' }}
                     animate={{ color: 'var(--foreground)' }}
                     transition={{ duration: 1.5 }}
-                    className="text-[10px] font-mono tabular-nums font-medium"
+                    className="text-[12px] font-mono tabular-nums font-bold"
                   >
                     {formatLapTime(car.lastLap)}
                   </motion.div>
@@ -167,9 +184,9 @@ export default function Leaderboard() {
             animate={{ opacity: 1 }}
             className="flex flex-col items-center justify-center py-16 gap-2"
           >
-            <div className="w-6 h-6 border-2 border-[var(--f1-red)] border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin" />
             <span className="text-[11px] text-[var(--muted-foreground)]"
-                  style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>
+                  style={{ fontFamily: "var(--font-ui)" }}>
               WAITING FOR DATA
             </span>
           </motion.div>

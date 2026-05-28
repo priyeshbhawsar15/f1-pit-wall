@@ -5,7 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, AlertTriangle, Trophy, Flag, TrendingUp, ShieldAlert, Clock } from 'lucide-react';
 import { EVENT_CODES } from '@/lib/constants';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
+
+function formatRaceTime(eventTimestamp: string, sessionStart: string | null): string {
+  if (!sessionStart) return '--:--';
+  const elapsed = Math.max(0, Math.floor((new Date(eventTimestamp).getTime() - new Date(sessionStart).getTime()) / 1000));
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 interface Participant {
   carIndex: number;
@@ -77,6 +85,7 @@ const SHOWN_CODES = ['OVTK', 'COLL', 'FTLP', 'PENA', 'RTMT', 'RCWN', 'SCAR', 'RD
 export default function RaceMomentsTimeline({ sessionId }: Props) {
   const [events, setEvents] = useState<RaceEvent[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [sessionStart, setSessionStart] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('all');
 
@@ -86,6 +95,7 @@ export default function RaceMomentsTimeline({ sessionId }: Props) {
       .then((data) => {
         if (data.events) setEvents(data.events);
         if (data.participants) setParticipants(data.participants);
+        if (data.sessionCreatedAt) setSessionStart(data.sessionCreatedAt);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -107,7 +117,7 @@ export default function RaceMomentsTimeline({ sessionId }: Props) {
 
   if (loading) return (
     <div className="card p-6 flex items-center justify-center">
-      <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      <div className="w-5 h-5 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
@@ -125,9 +135,9 @@ export default function RaceMomentsTimeline({ sessionId }: Props) {
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={`text-[9px] px-2 py-0.5 rounded-sm font-bold uppercase tracking-wider transition-colors ${
-                filter === f.key ? 'bg-[var(--accent)] text-white' : 'bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-white'
+                filter === f.key ? 'bg-[var(--m-red)] text-white' : 'bg-[var(--surface)] text-[var(--muted-foreground)] hover:text-white'
               }`}
-              style={F1_FONT}
+              style={BMW_FONT}
             >
               {f.label}
             </button>
@@ -154,15 +164,15 @@ export default function RaceMomentsTimeline({ sessionId }: Props) {
                       {meta.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] font-bold" style={{ ...F1_FONT, color: meta.color }}>
+                      <div className="text-[10px] font-bold" style={{ ...BMW_FONT, color: meta.color }}>
                         {meta.label}
                       </div>
                       <div className="text-[11px] text-[var(--foreground)]">
                         {describeEvent(ev.eventCode, ev.details, participants)}
                       </div>
                     </div>
-                    <div className="text-[9px] text-[var(--muted-foreground)] flex-shrink-0 font-mono">
-                      {new Date(ev.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    <div className="text-[9px] text-[var(--muted-foreground)] flex-shrink-0 font-mono" title={new Date(ev.timestamp).toLocaleTimeString()}>
+                      +{formatRaceTime(ev.timestamp, sessionStart)}
                     </div>
                   </motion.div>
                 );

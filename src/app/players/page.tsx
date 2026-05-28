@@ -3,12 +3,13 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Radio, History, UserPlus, Pencil, Trash2, Upload, X, Check, Users } from 'lucide-react';
+import { UserPlus, Pencil, Trash2, Upload, X, Check, Users } from 'lucide-react';
+import AppHeader from '@/components/AppHeader';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 const PRESET_COLORS = [
-  '#E10600', '#FF8000', '#FFC300', '#00ff87', '#27F4D2',
+  '#E10600', '#FF8000', '#FFC300', '#0fa336', '#27F4D2',
   '#3671C6', '#6692FF', '#9B59B6', '#E74C3C', '#FFFFFF',
 ];
 
@@ -66,7 +67,7 @@ function ProfileModal({
         <button onClick={onClose} className="absolute top-4 right-4 text-[var(--muted)] hover:text-white">
           <X size={16} />
         </button>
-        <h2 className="text-sm font-bold mb-4" style={F1_FONT}>
+        <h2 className="text-sm font-bold mb-4" style={BMW_FONT}>
           {profile?.id ? 'Edit Profile' : 'New Profile'}
         </h2>
 
@@ -102,18 +103,18 @@ function ProfileModal({
         </div>
 
         {/* Name */}
-        <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={F1_FONT}>
+        <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>
           Name
         </label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="e.g. Max"
-          className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-2 text-sm mb-4 focus:outline-none focus:border-[var(--accent)]"
+          className="w-full bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-2 text-sm mb-4 focus:outline-none focus:border-[var(--m-blue-dark)]"
         />
 
         {/* Color */}
-        <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-2" style={F1_FONT}>
+        <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-2" style={BMW_FONT}>
           Accent Color
         </label>
         <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -137,8 +138,8 @@ function ProfileModal({
         <button
           onClick={() => onSave({ name, color, avatarUrl: avatarUrl || null })}
           disabled={!name.trim()}
-          className="w-full bg-[var(--accent)] hover:bg-[var(--accent-dim)] disabled:opacity-40 text-white text-sm font-bold py-2 rounded-sm transition-colors flex items-center justify-center gap-2"
-          style={F1_FONT}
+          className="w-full bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 disabled:opacity-40 text-white text-sm font-bold py-2 rounded-sm transition-colors flex items-center justify-center gap-2"
+          style={BMW_FONT}
         >
           <Check size={14} />
           {profile?.id ? 'Save Changes' : 'Create Profile'}
@@ -182,35 +183,18 @@ export default function PlayersPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="red-bar" />
-      <header className="f1-header flex items-center gap-3 px-6 py-3">
-        <span className="f1-logo-text">F1</span>
-        <span className="text-[10px] font-bold text-[var(--muted-foreground)] tracking-[0.15em] uppercase" style={F1_FONT}>
-          Players
-        </span>
-        <div className="ml-auto flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-white transition-colors">
-            <Radio size={12} /> Live
-          </Link>
-          <Link href="/sessions" className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-white transition-colors">
-            <History size={12} /> History
-          </Link>
-          <Link href="/players/h2h" className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-white transition-colors">
-            <UserPlus size={12} /> H2H
-          </Link>
-        </div>
-      </header>
+      <AppHeader title="PLAYERS" />
 
       <div className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold" style={F1_FONT}>Human Players</h1>
+            <h1 className="text-xl font-bold" style={BMW_FONT}>Human Players</h1>
             <p className="text-xs text-[var(--muted-foreground)] mt-0.5">{profiles.length} profiles</p>
           </div>
           <button
             onClick={() => setModal({ open: true, profile: {} })}
-            className="flex items-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors"
-            style={F1_FONT}
+            className="flex items-center gap-2 bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors"
+            style={BMW_FONT}
           >
             <UserPlus size={13} /> New Profile
           </button>
@@ -218,7 +202,7 @@ export default function PlayersPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : profiles.length === 0 ? (
           <div className="card p-12 text-center">
@@ -229,8 +213,8 @@ export default function PlayersPage() {
             </p>
             <button
               onClick={() => setModal({ open: true, profile: {} })}
-              className="inline-flex items-center gap-2 bg-[var(--accent)] hover:bg-[var(--accent-dim)] text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors"
-              style={F1_FONT}
+              className="inline-flex items-center gap-2 bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 text-white text-xs font-bold px-4 py-2 rounded-sm transition-colors"
+              style={BMW_FONT}
             >
               <UserPlus size={13} /> Add First Player
             </button>
@@ -259,7 +243,7 @@ export default function PlayersPage() {
                       )}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-bold text-sm truncate" style={F1_FONT}>{p.name}</div>
+                      <div className="font-bold text-sm truncate" style={BMW_FONT}>{p.name}</div>
                       <div className="text-[10px] text-[var(--muted-foreground)]">
                         {p._count.participants} race{p._count.participants !== 1 ? 's' : ''}
                       </div>
@@ -281,8 +265,8 @@ export default function PlayersPage() {
                     </button>
                     <Link
                       href={`/players/${p.id}`}
-                      className="ml-auto text-[10px] text-[var(--accent)] hover:text-white transition-colors"
-                      style={F1_FONT}
+                      className="ml-auto text-[10px] text-[var(--m-red)] hover:text-white transition-colors"
+                      style={BMW_FONT}
                     >
                       Stats →
                     </Link>

@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { TRACK_NAMES, SESSION_TYPES, WEATHER_TYPES, TEAM_COLORS } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import {
-  Calendar, MapPin, Cloud, Users, ChevronRight, Radio,
+  Calendar, MapPin, Cloud, Users, ChevronRight,
   Trophy, Flag, BarChart3, Clock,
 } from 'lucide-react';
+import AppHeader from '@/components/AppHeader';
 
-const F1_FONT = { fontFamily: "'F1', 'Arial Black', sans-serif" };
+const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
 interface SessionRow {
   id: string;
@@ -56,23 +57,7 @@ export default function SessionsPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <div className="red-bar" />
-      <header className="f1-header flex items-center gap-3 px-6 py-3">
-        <span className="f1-logo-text">F1</span>
-        <span className="text-[10px] font-bold text-[var(--muted-foreground)] tracking-[0.15em] uppercase" style={F1_FONT}>
-          History
-        </span>
-        <div className="ml-auto">
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"
-          >
-            <Radio size={12} />
-            Live Dashboard
-          </Link>
-        </div>
-      </header>
+      <AppHeader title="HISTORY" />
 
       <div className="max-w-6xl mx-auto p-6">
         {/* Analytics summary */}
@@ -94,7 +79,7 @@ export default function SessionsPage() {
               >
                 <div className="flex items-center gap-2 mb-1">
                   {stat.icon}
-                  <span className="text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={F1_FONT}>
+                  <span className="text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>
                     {stat.label}
                   </span>
                 </div>
@@ -107,7 +92,7 @@ export default function SessionsPage() {
         {/* Session list */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mb-3" />
+            <div className="w-8 h-8 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin mb-3" />
             <span className="text-sm text-[var(--muted-foreground)]">Loading sessions...</span>
           </div>
         ) : sessions.length === 0 ? (
@@ -124,12 +109,12 @@ export default function SessionsPage() {
               <Link
                 key={s.id}
                 href={`/sessions/${s.id}?uid=${s.sessionUID}`}
-                className="card block p-4 hover:border-[var(--accent)] transition-all group"
+                className="card block p-4 hover:border-[var(--m-blue-dark)] transition-all group"
               >
                 <div className="flex items-center gap-4">
                   {/* Session type badge */}
-                  <div className="w-10 h-10 rounded-lg bg-[var(--accent-glow)] flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-black text-[var(--accent)]">
+                  <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-[var(--surface-elevated)]" style={{ borderRadius: 0 }}>
+                    <span className="text-xs font-black text-[var(--foreground)]">
                       {SESSION_TYPES[s.sessionType]?.replace('Short ', '') || '?'}
                     </span>
                   </div>
@@ -184,7 +169,7 @@ export default function SessionsPage() {
                     )}
                   </div>
 
-                  <ChevronRight size={16} className="text-[var(--muted)] group-hover:text-[var(--accent)] transition-colors flex-shrink-0" />
+                  <ChevronRight size={16} className="text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors flex-shrink-0" />
                 </div>
               </Link>
             ))}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTelemetryStore } from '@/stores/telemetryStore';
-import { TEAM_COLORS } from '@/lib/constants';
+import { TEAM_COLORS, TEAM_LOGOS, DRIVER_FLAGS } from '@/lib/constants';
 import { motion } from 'framer-motion';
 
 export default function TelemetryPanel() {
@@ -29,66 +29,78 @@ export default function TelemetryPanel() {
     >
       <div className="card-header">
         <span className="card-title">Telemetry</span>
-        <span className="text-[10px] font-bold" style={{ color: teamColor, fontFamily: "'F1', 'Arial Black', sans-serif" }}>
-          {driver?.name || `Car ${selectedCarIndex}`}
-        </span>
+        <div className="flex items-center gap-2">
+          {driver?.name && DRIVER_FLAGS[driver.name] && (
+            <img src={DRIVER_FLAGS[driver.name]} alt="" style={{ width: 18, height: 12, objectFit: 'cover', borderRadius: 0 }} />
+          )}
+          <span className="text-[10px] font-bold" style={{ color: teamColor, fontFamily: "var(--font-ui)" }}>
+            {driver?.name || `Car ${selectedCarIndex}`}
+          </span>
+          {driver && TEAM_LOGOS[driver.team] && (
+            <img
+              src={TEAM_LOGOS[driver.team]}
+              alt=""
+              style={{ height: 14, width: 'auto', maxWidth: 36, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: 0.6 }}
+            />
+          )}
+        </div>
       </div>
 
-      <div className="p-3 space-y-3">
+      <div className="p-5 space-y-5">
         {/* Speed + Gear + DRS — broadcast-style large readouts */}
-        <div className="flex items-end gap-4">
+        <div className="flex items-end gap-5">
           <div>
             <span className="speed-readout">{car?.spd ?? '---'}</span>
-            <span className="text-[9px] text-[var(--muted-foreground)] ml-1 uppercase"
-                  style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>km/h</span>
+            <span className="text-[11px] text-[var(--muted)] ml-1.5 uppercase tracking-wider"
+                  style={{ fontFamily: "var(--font-ui)" }}>km/h</span>
           </div>
           <div className="flex flex-col items-center pb-0.5">
-            <span className="gear-readout" style={{ color: teamColor }}>{gearLabel}</span>
-            <span className="text-[8px] text-[var(--muted-foreground)] uppercase tracking-wider"
-                  style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>Gear</span>
+            <span className="gear-readout" style={{ color: 'var(--foreground)' }}>{gearLabel}</span>
+            <span className="text-[10px] text-[var(--muted)] uppercase tracking-[1.5px] mt-1"
+                  style={{ fontFamily: "var(--font-ui)" }}>GEAR</span>
           </div>
           <motion.div
             className="pb-1"
-            animate={{ opacity: car?.drs ? 1 : 0.3, scale: car?.drs ? 1 : 0.95 }}
+            animate={{ opacity: car?.drs ? 1 : 0.25, scale: car?.drs ? 1 : 0.95 }}
             transition={{ duration: 0.15 }}
           >
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-sm uppercase tracking-wider ${
+            <span className={`text-[11px] font-bold px-3 py-1.5 uppercase tracking-[2px] ${
               car?.drs
-                ? 'bg-[var(--green)] text-[var(--f1-black)]'
-                : 'bg-[var(--surface)] text-[var(--muted)]'
-            }`} style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>
+                ? 'bg-[var(--success)] text-black'
+                : 'bg-[var(--surface-elevated)] text-[var(--muted)]'
+            }`} style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}>
               DRS
             </span>
           </motion.div>
           <div className="flex flex-col items-end ml-auto pb-0.5">
-            <span className="text-sm font-mono font-bold tabular-nums">{car?.rpm ?? '---'}</span>
-            <span className="text-[8px] text-[var(--muted-foreground)] uppercase"
-                  style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>RPM</span>
+            <span className="text-[18px] font-mono font-bold tabular-nums">{car?.rpm ?? '---'}</span>
+            <span className="text-[10px] text-[var(--muted)] uppercase tracking-[1.5px] mt-1"
+                  style={{ fontFamily: "var(--font-ui)" }}>RPM</span>
           </div>
         </div>
 
-        {/* Throttle / Brake — F1 TV style bars */}
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] w-10 text-right text-[var(--muted-foreground)] uppercase tracking-wider"
-                  style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>Thr</span>
+        {/* Throttle / Brake */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] w-12 text-right text-[var(--muted)] uppercase tracking-[1.5px]"
+                  style={{ fontFamily: "var(--font-ui)" }}>THR</span>
             <div className="throttle-bar flex-1">
               <motion.div
                 className="throttle-bar-fill"
-                style={{ backgroundColor: '#00ff87' }}
+                style={{ backgroundColor: '#0fa336' }}
                 animate={{ width: `${throttlePct}%` }}
                 transition={{ duration: 0.08, ease: 'linear' }}
               />
             </div>
-            <span className="text-[9px] font-mono w-8 text-right tabular-nums">{Math.round(throttlePct)}%</span>
+            <span className="text-[11px] font-mono w-9 text-right tabular-nums">{Math.round(throttlePct)}%</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] w-10 text-right text-[var(--muted-foreground)] uppercase tracking-wider"
-                  style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>Brk</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] w-12 text-right text-[var(--muted)] uppercase tracking-[1.5px]"
+                  style={{ fontFamily: "var(--font-ui)" }}>BRK</span>
             <div className="throttle-bar flex-1">
               <motion.div
                 className="throttle-bar-fill"
-                style={{ backgroundColor: '#e10600' }}
+                style={{ backgroundColor: '#e22718' }}
                 animate={{ width: `${brakePct}%` }}
                 transition={{ duration: 0.08, ease: 'linear' }}
               />
@@ -100,7 +112,7 @@ export default function TelemetryPanel() {
         {/* Tyre surface temps */}
         <div>
           <span className="text-[9px] text-[var(--muted-foreground)] uppercase tracking-wider"
-                style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>
+                style={{ fontFamily: "var(--font-ui)" }}>
             Tyre Temps
           </span>
           <div className="grid grid-cols-2 gap-1 mt-1">
@@ -123,7 +135,7 @@ export default function TelemetryPanel() {
         {/* Engine temp */}
         <div className="stat-block flex items-center justify-between">
           <span className="text-[9px] text-[var(--muted-foreground)] uppercase"
-                style={{ fontFamily: "'F1', 'Arial Black', sans-serif" }}>Engine</span>
+                style={{ fontFamily: "var(--font-ui)" }}>Engine</span>
           <span className="text-xs font-mono font-bold">{car?.eTemp ?? '---'}°C</span>
         </div>
       </div>
