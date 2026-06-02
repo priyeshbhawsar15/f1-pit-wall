@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { TRACK_NAMES, SESSION_TYPES, TEAM_COLORS } from '@/lib/constants';
 import { motion } from 'framer-motion';
@@ -9,6 +9,7 @@ import RaceMomentsTimeline from '@/components/RaceMomentsTimeline';
 import AppHeader from '@/components/AppHeader';
 
 const BMW_FONT = { fontFamily: "var(--font-ui)" };
+const REPLAY_FRAME_CHUNK_SIZE = 400;
 
 interface MotionFrame {
   time: string;
@@ -22,6 +23,11 @@ interface ReplayData {
   lapData: any[];
   carStatus: any[];
   telemetry: any[];
+}
+
+interface ReplayResponse extends ReplayData {
+  nextCursor: string | null;
+  hasMore: boolean;
 }
 
 interface SessionData {
@@ -87,25 +93,133 @@ export default function SessionReplayPage() {
 
   useEffect(() => {
     if (!sessionUID) return;
-    setLoading(true);
-    fetch(`/api/replay?sessionUID=${sessionUID}`)
-      .then((r) => r.json())
-      .then((data: ReplayData) => {
-        setReplayData(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+
+    let cancelled = false;
+
+    async function loadReplay() {
+      setLoading(true);
+      setReplayData(null);
+      setPlaying(false);
+      setCurrentTimeIdx(0);
+      lastFrameTime.current = 0;
+
+      const aggregated: ReplayData = {
+        motion: [],
+        lapData: [],
+        carStatus: [],
+        telemetry: [],
+      };
+
+      try {
+        let cursor: string | null = null;
+        let hasMore = true;
+
+        while (hasMore) {
+          const params = new URLSearchParams({
+            sessionUID,
+            limitFrames: String(REPLAY_FRAME_CHUNK_SIZE),
+          });
+
+          if (cursor) {
+            params.set('cursor', cursor);
+          }
+
+          const response = await fetch(`/api/replay?${params.toString()}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch replay data');
+          }
+
+          const chunk: ReplayResponse = await response.json();
+          aggregated.motion.push(...chunk.motion);
+          aggregated.lapData.push(...chunk.lapData);
+          aggregated.carStatus.push(...chunk.carStatus);
+          aggregated.telemetry.push(...chunk.telemetry);
+
+          cursor = chunk.nextCursor;
+          hasMore = chunk.hasMore && Boolean(chunk.nextCursor);
+        }
+
+        if (!cancelled) {
+          setReplayData(aggregated);
+        }
+      } catch {
+        if (!cancelled) {
+          setReplayData(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadReplay();
+
+    return () => {
+      cancelled = true;
+    };
   }, [sessionUID]);
 
-  const timestamps = replayData
-    ? Array.from(new Set(replayData.motion.map((m) => m.time))).sort()
-    : [];
+  const timestamps = useMemo(
+    () => (replayData ? Array.from(new Set(replayData.motion.map((m) => m.time))).sort() : []),
+    [replayData]
+  );
+
+  const motionByTime = useMemo(() => {
+    const grouped = new Map<string, MotionFrame[]>();
+
+    for (const frame of replayData?.motion ?? []) {
+      const existing = grouped.get(frame.time);
+      if (existing) {
+        existing.push(frame);
+      } else {
+        grouped.set(frame.time, [frame]);
+      }
+    }
+
+    return grouped;
+  }, [replayData]);
+
+  const carTrails = useMemo(() => {
+    const trails = new Map<number, MotionFrame[]>();
+
+    for (const frame of replayData?.motion ?? []) {
+      if (!trails.has(frame.car_index)) {
+        trails.set(frame.car_index, []);
+      }
+      trails.get(frame.car_index)!.push(frame);
+    }
+
+    return trails;
+  }, [replayData]);
+
+  const trackBounds = useMemo(() => {
+    if (!replayData || replayData.motion.length === 0) return null;
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+
+    for (const frame of replayData.motion) {
+      if (frame.world_position_x < minX) minX = frame.world_position_x;
+      if (frame.world_position_x > maxX) maxX = frame.world_position_x;
+      if (frame.world_position_z < minZ) minZ = frame.world_position_z;
+      if (frame.world_position_z > maxZ) maxZ = frame.world_position_z;
+    }
+
+    return { minX, maxX, minZ, maxZ };
+  }, [replayData]);
 
   const totalFrames = timestamps.length;
 
+  useEffect(() => {
+    setCurrentTimeIdx((prev) => Math.min(prev, Math.max(0, timestamps.length - 1)));
+  }, [timestamps.length]);
+
   const drawFrame = useCallback((frameIdx: number) => {
     const canvas = canvasRef.current;
-    if (!canvas || !replayData || timestamps.length === 0) return;
+    if (!canvas || !replayData || timestamps.length === 0 || !trackBounds) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -113,16 +227,10 @@ export default function SessionReplayPage() {
     ctx.clearRect(0, 0, W, W);
 
     const currentTime = timestamps[frameIdx];
-    const frameCars = replayData.motion.filter((m) => m.time === currentTime);
+    const frameCars = motionByTime.get(currentTime) ?? [];
     if (frameCars.length === 0) return;
 
-    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
-    for (const m of replayData.motion) {
-      if (m.world_position_x < minX) minX = m.world_position_x;
-      if (m.world_position_x > maxX) maxX = m.world_position_x;
-      if (m.world_position_z < minZ) minZ = m.world_position_z;
-      if (m.world_position_z > maxZ) maxZ = m.world_position_z;
-    }
+    const { minX, maxX, minZ, maxZ } = trackBounds;
 
     const rangeX = maxX - minX || 1;
     const rangeZ = maxZ - minZ || 1;
@@ -131,12 +239,6 @@ export default function SessionReplayPage() {
     const scale = Math.min(drawSize / rangeX, drawSize / rangeZ);
     const mapX = (x: number) => pad + (x - minX) * scale + (drawSize - rangeX * scale) / 2;
     const mapZ = (z: number) => pad + (z - minZ) * scale + (drawSize - rangeZ * scale) / 2;
-
-    const carTrails = new Map<number, MotionFrame[]>();
-    for (const m of replayData.motion) {
-      if (!carTrails.has(m.car_index)) carTrails.set(m.car_index, []);
-      carTrails.get(m.car_index)!.push(m);
-    }
 
     carTrails.forEach((trail) => {
       if (trail.length < 2) return;
@@ -173,7 +275,7 @@ export default function SessionReplayPage() {
     ctx.font = '11px monospace';
     ctx.textAlign = 'left';
     ctx.fillText(`Frame ${frameIdx + 1}/${totalFrames}`, 10, W - 10);
-  }, [replayData, session, timestamps, totalFrames]);
+  }, [carTrails, motionByTime, replayData, session, timestamps, totalFrames, trackBounds]);
 
   useEffect(() => {
     if (!playing || !replayData || timestamps.length === 0) return;
@@ -207,7 +309,7 @@ export default function SessionReplayPage() {
 
   const trackName = session ? (TRACK_NAMES[session.trackId] || 'Unknown') : '---';
   const sessionType = session ? (SESSION_TYPES[session.sessionType] || '---') : '---';
-  const progressPct = totalFrames > 0 ? ((currentTimeIdx / (totalFrames - 1)) * 100) : 0;
+  const progressPct = totalFrames > 1 ? ((currentTimeIdx / (totalFrames - 1)) * 100) : 0;
   const sortedParticipants = session
     ? [...session.participants].sort((a, b) => {
         const aLinked = Boolean(a.humanProfileId);

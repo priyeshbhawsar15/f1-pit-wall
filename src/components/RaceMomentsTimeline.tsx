@@ -7,9 +7,14 @@ import { EVENT_CODES } from '@/lib/constants';
 
 const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
-function formatRaceTime(eventTimestamp: string, sessionStart: string | null): string {
-  if (!sessionStart) return '--:--';
-  const elapsed = Math.max(0, Math.floor((new Date(eventTimestamp).getTime() - new Date(sessionStart).getTime()) / 1000));
+function formatRaceTime(event: RaceEvent, sessionStart: string | null): string {
+  const elapsed = typeof event.sessionTimeMs === 'number'
+    ? Math.max(0, Math.floor(event.sessionTimeMs / 1000))
+    : sessionStart
+      ? Math.max(0, Math.floor((new Date(event.timestamp).getTime() - new Date(sessionStart).getTime()) / 1000))
+      : -1;
+
+  if (elapsed < 0) return '--:--';
   const m = Math.floor(elapsed / 60);
   const s = elapsed % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
@@ -26,6 +31,7 @@ interface RaceEvent {
   id: string;
   eventCode: string;
   timestamp: string;
+  sessionTimeMs: number | null;
   details: any;
 }
 
@@ -172,7 +178,7 @@ export default function RaceMomentsTimeline({ sessionId }: Props) {
                       </div>
                     </div>
                     <div className="text-[9px] text-[var(--muted-foreground)] flex-shrink-0 font-mono" title={new Date(ev.timestamp).toLocaleTimeString()}>
-                      +{formatRaceTime(ev.timestamp, sessionStart)}
+                      +{formatRaceTime(ev, sessionStart)}
                     </div>
                   </motion.div>
                 );

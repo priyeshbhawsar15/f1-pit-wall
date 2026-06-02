@@ -1,10 +1,10 @@
 import dgram from 'dgram';
-import { parseHeader } from './parser/header';
+import { PacketHeader, parseHeader } from './parser/header';
 import { parseMotionData } from './parser/motion';
 import { parseSessionData } from './parser/session';
 import { parseLapData } from './parser/lap-data';
-import { parseEventData } from './parser/event';
-import { parseParticipantsData } from './parser/participants';
+import { PacketEventData, parseEventData } from './parser/event';
+import { PacketParticipantsData, parseParticipantsData } from './parser/participants';
 import { parseCarSetupData } from './parser/car-setup';
 import { parseCarTelemetryData } from './parser/car-telemetry';
 import { parseCarStatusData } from './parser/car-status';
@@ -15,13 +15,12 @@ import { parseTyreSetsData } from './parser/tyre-sets';
 import { parseMotionExData } from './parser/motion-ex';
 import { parseTimeTrialData } from './parser/time-trial';
 import { parseLapPositionsData } from './parser/lap-positions';
-import { PacketId, DEFAULT_UDP_PORT } from '../lib/constants';
+import { PacketId, DEFAULT_UDP_PORT, MAX_CARS } from '../lib/constants';
 import { publish, RedisChannel } from './realtime/redis';
 import {
   writeMotionSamples,
   writeTelemetrySamples,
   writeLapDataSamples,
-  writeCarStatusSamples,
   writeCarDamageSamples,
   upsertSession,
   upsertParticipants,
@@ -35,8 +34,79 @@ let lapDataThrottleCounter = 0;
 let statusThrottleCounter = 0;
 let damageThrottleCounter = 0;
 
+const humanCarIndicesBySession = new Map<string, Set<number>>();
+const pendingEventsBySession = new Map<string, PacketEventData[]>();
+
 const DB_WRITE_INTERVAL = 5;
 const REALTIME_THROTTLE = 2;
+
+function getOrCreateHumanCarIndices(sessionUID: string): Set<number> {
+  let indices = humanCarIndicesBySession.get(sessionUID);
+  if (!indices) {
+    indices = new Set<number>();
+    humanCarIndicesBySession.set(sessionUID, indices);
+  }
+  return indices;
+}
+
+function rememberHumanCarIndicesFromHeader(sessionUID: string, header: PacketHeader): Set<number> {
+  const indices = getOrCreateHumanCarIndices(sessionUID);
+
+  if (header.playerCarIndex >= 0 && header.playerCarIndex < MAX_CARS) {
+    indices.add(header.playerCarIndex);
+  }
+
+  if (header.secondaryPlayerCarIndex >= 0 && header.secondaryPlayerCarIndex < MAX_CARS) {
+    indices.add(header.secondaryPlayerCarIndex);
+  }
+
+  return indices;
+}
+
+function rememberHumanCarIndicesFromParticipants(sessionUID: string, packet: PacketParticipantsData): Set<number> {
+  const indices = rememberHumanCarIndicesFromHeader(sessionUID, packet.header);
+
+  for (let i = 0; i < packet.numActiveCars; i++) {
+    if (packet.participants[i]?.aiControlled === 0) {
+      indices.add(i);
+    }
+  }
+
+  return indices;
+}
+
+function queuePendingEvent(packet: PacketEventData): void {
+  const sessionUID = packet.header.sessionUID.toString();
+  const queued = pendingEventsBySession.get(sessionUID) ?? [];
+  queued.push(packet);
+  pendingEventsBySession.set(sessionUID, queued);
+}
+
+async function flushPendingEvents(sessionUID: string): Promise<void> {
+  const queued = pendingEventsBySession.get(sessionUID);
+  if (!queued || queued.length === 0) return;
+
+  const remaining: PacketEventData[] = [];
+
+  for (const packet of queued) {
+    try {
+      const persisted = await writeEvent(packet);
+      if (!persisted) {
+        remaining.push(packet);
+      }
+    } catch (e: any) {
+      console.error('[DB] Event flush error:', e.message);
+      remaining.push(packet);
+    }
+  }
+
+  if (remaining.length > 0) {
+    pendingEventsBySession.set(sessionUID, remaining);
+    return;
+  }
+
+  pendingEventsBySession.delete(sessionUID);
+}
 
 export function startUDPListener(): dgram.Socket {
   const port = parseInt(process.env.UDP_PORT || String(DEFAULT_UDP_PORT), 10);
@@ -47,6 +117,7 @@ export function startUDPListener(): dgram.Socket {
     try {
       if (msg.length < 29) return;
       const header = parseHeader(msg);
+      const sessionUID = header.sessionUID.toString();
 
       switch (header.packetId) {
         case PacketId.Motion: {
@@ -59,7 +130,7 @@ export function startUDPListener(): dgram.Socket {
               z: Math.round(m.worldPositionZ * 10) / 10,
               yaw: Math.round(m.yaw * 100) / 100,
             }));
-            publish(RedisChannel.Motion, { sessionUID: header.sessionUID.toString(), cars: slim });
+            publish(RedisChannel.Motion, { sessionUID, cars: slim });
           }
           if (motionThrottleCounter % DB_WRITE_INTERVAL === 0) {
             writeMotionSamples(packet).catch((e) => console.error('[DB] Motion write error:', e.message));
@@ -70,7 +141,7 @@ export function startUDPListener(): dgram.Socket {
         case PacketId.Session: {
           const packet = parseSessionData(msg, header);
           publish(RedisChannel.Session, {
-            sessionUID: header.sessionUID.toString(),
+            sessionUID,
             trackId: packet.trackId,
             sessionType: packet.sessionType,
             weather: packet.weather,
@@ -88,7 +159,9 @@ export function startUDPListener(): dgram.Socket {
             sector3LapDistanceStart: packet.sector3LapDistanceStart,
             weatherForecast: packet.weatherForecastSamples.slice(0, packet.numWeatherForecastSamples),
           });
-          upsertSession(packet).catch((e) => console.error('[DB] Session write error:', e.message));
+          upsertSession(packet)
+            .then(() => flushPendingEvents(sessionUID))
+            .catch((e) => console.error('[DB] Session write error:', e.message));
           break;
         }
 
@@ -115,7 +188,7 @@ export function startUDPListener(): dgram.Socket {
               dist: Math.round(l.lapDistance),
               speedTrap: l.speedTrapFastestSpeed,
             }));
-            publish(RedisChannel.LapData, { sessionUID: header.sessionUID.toString(), cars: slim });
+            publish(RedisChannel.LapData, { sessionUID, cars: slim });
           }
           if (lapDataThrottleCounter % DB_WRITE_INTERVAL === 0) {
             writeLapDataSamples(packet).catch((e) => console.error('[DB] LapData write error:', e.message));
@@ -127,17 +200,24 @@ export function startUDPListener(): dgram.Socket {
           const packet = parseEventData(msg, header);
           if (packet.eventStringCode !== 'BUTN') {
             publish(RedisChannel.Event, {
-              sessionUID: header.sessionUID.toString(),
+              sessionUID,
               code: packet.eventStringCode,
               details: packet.eventDetails,
             });
-            writeEvent(packet).catch((e) => console.error('[DB] Event write error:', e.message));
+            writeEvent(packet)
+              .then((persisted) => {
+                if (!persisted) {
+                  queuePendingEvent(packet);
+                }
+              })
+              .catch((e) => console.error('[DB] Event write error:', e.message));
           }
           break;
         }
 
         case PacketId.Participants: {
           const packet = parseParticipantsData(msg, header);
+          rememberHumanCarIndicesFromParticipants(sessionUID, packet);
           const slim = packet.participants.slice(0, packet.numActiveCars).map((p, idx) => ({
             i: idx,
             name: p.name,
@@ -147,7 +227,7 @@ export function startUDPListener(): dgram.Socket {
             nat: p.nationality,
           }));
           publish(RedisChannel.Participants, {
-            sessionUID: header.sessionUID.toString(),
+            sessionUID,
             numActive: packet.numActiveCars,
             drivers: slim,
           });
@@ -157,6 +237,7 @@ export function startUDPListener(): dgram.Socket {
 
         case PacketId.CarTelemetry: {
           const packet = parseCarTelemetryData(msg, header);
+          const humanCarIndices = rememberHumanCarIndicesFromHeader(sessionUID, header);
           telemetryThrottleCounter++;
           if (telemetryThrottleCounter % REALTIME_THROTTLE === 0) {
             const slim = packet.carTelemetryData.map((t, idx) => ({
@@ -175,13 +256,13 @@ export function startUDPListener(): dgram.Socket {
               tPress: t.tyresPressure.map((p) => Math.round(p * 10) / 10),
             }));
             publish(RedisChannel.Telemetry, {
-              sessionUID: header.sessionUID.toString(),
+              sessionUID,
               cars: slim,
               suggestedGear: packet.suggestedGear,
             });
           }
           if (telemetryThrottleCounter % DB_WRITE_INTERVAL === 0) {
-            writeTelemetrySamples(packet).catch((e) => console.error('[DB] Telemetry write error:', e.message));
+            writeTelemetrySamples(packet, humanCarIndices).catch((e) => console.error('[DB] Telemetry write error:', e.message));
           }
           break;
         }
@@ -208,10 +289,7 @@ export function startUDPListener(): dgram.Socket {
               mgukW: Math.round(s.enginePowerMGUK),
               flags: s.vehicleFIAFlags,
             }));
-            publish(RedisChannel.CarStatus, { sessionUID: header.sessionUID.toString(), cars: slim });
-          }
-          if (statusThrottleCounter % DB_WRITE_INTERVAL === 0) {
-            writeCarStatusSamples(packet).catch((e) => console.error('[DB] CarStatus write error:', e.message));
+            publish(RedisChannel.CarStatus, { sessionUID, cars: slim });
           }
           break;
         }
@@ -219,7 +297,7 @@ export function startUDPListener(): dgram.Socket {
         case PacketId.FinalClassification: {
           const packet = parseFinalClassificationData(msg, header);
           publish(RedisChannel.FinalClassification, {
-            sessionUID: header.sessionUID.toString(),
+            sessionUID,
             numCars: packet.numCars,
             results: packet.classificationData.slice(0, packet.numCars).map((c, idx) => ({
               i: idx,
@@ -240,6 +318,7 @@ export function startUDPListener(): dgram.Socket {
 
         case PacketId.CarDamage: {
           const packet = parseCarDamageData(msg, header);
+          const humanCarIndices = rememberHumanCarIndicesFromHeader(sessionUID, header);
           damageThrottleCounter++;
           if (damageThrottleCounter % (REALTIME_THROTTLE * 5) === 0) {
             const slim = packet.carDamageData.map((d, idx) => ({
@@ -252,10 +331,10 @@ export function startUDPListener(): dgram.Socket {
               engine: d.engineDamage,
               gearbox: d.gearBoxDamage,
             }));
-            publish(RedisChannel.CarDamage, { sessionUID: header.sessionUID.toString(), cars: slim });
+            publish(RedisChannel.CarDamage, { sessionUID, cars: slim });
           }
           if (damageThrottleCounter % (DB_WRITE_INTERVAL * 5) === 0) {
-            writeCarDamageSamples(packet).catch((e) => console.error('[DB] CarDamage write error:', e.message));
+            writeCarDamageSamples(packet, humanCarIndices).catch((e) => console.error('[DB] CarDamage write error:', e.message));
           }
           break;
         }
@@ -286,7 +365,7 @@ export function startUDPListener(): dgram.Socket {
             frontRightTyrePressure: Math.round(s.frontRightTyrePressure * 10) / 10,
             fuelLoad: Math.round(s.fuelLoad * 100) / 100,
           }));
-          publish(RedisChannel.CarSetups, { sessionUID: header.sessionUID.toString(), cars: slim });
+          publish(RedisChannel.CarSetups, { sessionUID, cars: slim });
           break;
         }
 
@@ -309,7 +388,7 @@ export function startUDPListener(): dgram.Socket {
             });
           }
           if (entries.length > 0) {
-            publish(RedisChannel.LapHistory, { sessionUID: header.sessionUID.toString(), entries });
+            publish(RedisChannel.LapHistory, { sessionUID, entries });
           }
           break;
         }
@@ -330,7 +409,7 @@ export function startUDPListener(): dgram.Socket {
             }
           }
           if (entries.length > 0) {
-            publish(RedisChannel.PositionHistory, { sessionUID: header.sessionUID.toString(), entries });
+            publish(RedisChannel.PositionHistory, { sessionUID, entries });
           }
           break;
         }

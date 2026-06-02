@@ -1,8 +1,8 @@
 import { prisma } from '../../lib/db';
+import { Prisma } from '@prisma/client';
 import { PacketMotionData } from '../parser/motion';
 import { PacketCarTelemetryData } from '../parser/car-telemetry';
 import { PacketLapData, getSectorTimeMS, getDeltaMS } from '../parser/lap-data';
-import { PacketCarStatusData } from '../parser/car-status';
 import { PacketCarDamageData } from '../parser/car-damage';
 import { PacketSessionData } from '../parser/session';
 import { PacketParticipantsData } from '../parser/participants';
@@ -34,22 +34,18 @@ export async function writeMotionSamples(packet: PacketMotionData): Promise<void
   );
 }
 
-export async function writeTelemetrySamples(packet: PacketCarTelemetryData): Promise<void> {
+export async function writeTelemetrySamples(packet: PacketCarTelemetryData, humanCarIndices: Set<number>): Promise<void> {
   const now = new Date();
   const sessionUID = BigInt.asIntN(64, packet.header.sessionUID).toString();
   const values: string[] = [];
 
   for (let i = 0; i < packet.carTelemetryData.length; i++) {
+    if (!humanCarIndices.has(i)) continue;
     const t = packet.carTelemetryData[i];
     if (t.speed === 0 && t.engineRPM === 0) continue;
     values.push(
       `('${now.toISOString()}', ${sessionUID}, ${i}, ${t.speed}, ${t.throttle}, ${t.steer}, ${t.brake}, ` +
-      `${t.clutch}, ${t.gear}, ${t.engineRPM}, ${t.drs}, ${t.revLightsPercent}, ` +
-      `${t.brakesTemperature[0]}, ${t.brakesTemperature[1]}, ${t.brakesTemperature[2]}, ${t.brakesTemperature[3]}, ` +
-      `${t.tyresSurfaceTemperature[0]}, ${t.tyresSurfaceTemperature[1]}, ${t.tyresSurfaceTemperature[2]}, ${t.tyresSurfaceTemperature[3]}, ` +
-      `${t.tyresInnerTemperature[0]}, ${t.tyresInnerTemperature[1]}, ${t.tyresInnerTemperature[2]}, ${t.tyresInnerTemperature[3]}, ` +
-      `${t.engineTemperature}, ` +
-      `${t.tyresPressure[0]}, ${t.tyresPressure[1]}, ${t.tyresPressure[2]}, ${t.tyresPressure[3]})`
+      `${t.clutch}, ${t.gear}, ${t.engineRPM}, ${t.drs})`
     );
   }
 
@@ -57,10 +53,7 @@ export async function writeTelemetrySamples(packet: PacketCarTelemetryData): Pro
 
   await prisma.$executeRawUnsafe(
     `INSERT INTO telemetry_samples (time, session_uid, car_index, speed, throttle, steer, brake, clutch, gear, ` +
-    `engine_rpm, drs, rev_lights_percent, brakes_temp_rl, brakes_temp_rr, brakes_temp_fl, brakes_temp_fr, ` +
-    `tyres_surface_temp_rl, tyres_surface_temp_rr, tyres_surface_temp_fl, tyres_surface_temp_fr, ` +
-    `tyres_inner_temp_rl, tyres_inner_temp_rr, tyres_inner_temp_fl, tyres_inner_temp_fr, ` +
-    `engine_temperature, tyres_pressure_rl, tyres_pressure_rr, tyres_pressure_fl, tyres_pressure_fr) VALUES ${values.join(',')}`
+    `engine_rpm, drs) VALUES ${values.join(',')}`
   );
 }
 
@@ -97,46 +90,19 @@ export async function writeLapDataSamples(packet: PacketLapData): Promise<void> 
   );
 }
 
-export async function writeCarStatusSamples(packet: PacketCarStatusData): Promise<void> {
-  const now = new Date();
-  const sessionUID = BigInt.asIntN(64, packet.header.sessionUID).toString();
-  const values: string[] = [];
-
-  for (let i = 0; i < packet.carStatusData.length; i++) {
-    const s = packet.carStatusData[i];
-    values.push(
-      `('${now.toISOString()}', ${sessionUID}, ${i}, ${s.fuelMix}, ${s.fuelInTank}, ${s.fuelCapacity}, ` +
-      `${s.fuelRemainingLaps}, ${s.drsAllowed}, ${s.drsActivationDistance}, ` +
-      `${s.actualTyreCompound}, ${s.visualTyreCompound}, ${s.tyresAgeLaps}, ${s.vehicleFIAFlags}, ` +
-      `${s.enginePowerICE}, ${s.enginePowerMGUK}, ${s.ersStoreEnergy}, ${s.ersDeployMode}, ` +
-      `${s.ersHarvestedThisLapMGUK}, ${s.ersHarvestedThisLapMGUH}, ${s.ersDeployedThisLap})`
-    );
-  }
-
-  if (values.length === 0) return;
-
-  await prisma.$executeRawUnsafe(
-    `INSERT INTO car_status_samples (time, session_uid, car_index, fuel_mix, fuel_in_tank, fuel_capacity, ` +
-    `fuel_remaining_laps, drs_allowed, drs_activation_distance, actual_tyre_compound, visual_tyre_compound, ` +
-    `tyres_age_laps, vehicle_fia_flags, engine_power_ice, engine_power_mguk, ers_store_energy, ers_deploy_mode, ` +
-    `ers_harvested_mguk, ers_harvested_mguh, ers_deployed_this_lap) VALUES ${values.join(',')}`
-  );
-}
-
-export async function writeCarDamageSamples(packet: PacketCarDamageData): Promise<void> {
+export async function writeCarDamageSamples(packet: PacketCarDamageData, humanCarIndices: Set<number>): Promise<void> {
   const now = new Date();
   const sessionUID = BigInt.asIntN(64, packet.header.sessionUID).toString();
   const values: string[] = [];
 
   for (let i = 0; i < packet.carDamageData.length; i++) {
+    if (!humanCarIndices.has(i)) continue;
     const d = packet.carDamageData[i];
     values.push(
       `('${now.toISOString()}', ${sessionUID}, ${i}, ` +
       `${d.tyresWear[0]}, ${d.tyresWear[1]}, ${d.tyresWear[2]}, ${d.tyresWear[3]}, ` +
-      `${d.tyresDamage[0]}, ${d.tyresDamage[1]}, ${d.tyresDamage[2]}, ${d.tyresDamage[3]}, ` +
       `${d.frontLeftWingDamage}, ${d.frontRightWingDamage}, ${d.rearWingDamage}, ` +
-      `${d.floorDamage}, ${d.diffuserDamage}, ${d.sidepodDamage}, ` +
-      `${d.drsFault}, ${d.ersFault}, ${d.gearBoxDamage}, ${d.engineDamage})`
+      `${d.floorDamage}, ${d.gearBoxDamage}, ${d.engineDamage})`
     );
   }
 
@@ -144,9 +110,8 @@ export async function writeCarDamageSamples(packet: PacketCarDamageData): Promis
 
   await prisma.$executeRawUnsafe(
     `INSERT INTO car_damage_samples (time, session_uid, car_index, tyres_wear_rl, tyres_wear_rr, tyres_wear_fl, tyres_wear_fr, ` +
-    `tyres_damage_rl, tyres_damage_rr, tyres_damage_fl, tyres_damage_fr, ` +
     `front_left_wing_damage, front_right_wing_damage, rear_wing_damage, ` +
-    `floor_damage, diffuser_damage, sidepod_damage, drs_fault, ers_fault, gearbox_damage, engine_damage) VALUES ${values.join(',')}`
+    `floor_damage, gearbox_damage, engine_damage) VALUES ${values.join(',')}`
   );
 }
 
@@ -202,7 +167,15 @@ export async function upsertParticipants(packet: PacketParticipantsData): Promis
       where: {
         sessionId_carIndex: { sessionId: session.id, carIndex: i },
       },
-      update: { name: p.name, teamId: p.teamId },
+      update: {
+        driverId: p.driverId,
+        teamId: p.teamId,
+        raceNumber: p.raceNumber,
+        nationality: p.nationality,
+        name: p.name,
+        aiControlled: p.aiControlled === 1,
+        platform: p.platform,
+      },
       create: {
         sessionId: session.id,
         carIndex: i,
@@ -218,19 +191,25 @@ export async function upsertParticipants(packet: PacketParticipantsData): Promis
   }
 }
 
-export async function writeEvent(packet: PacketEventData): Promise<void> {
+export async function writeEvent(packet: PacketEventData): Promise<boolean> {
   const session = await prisma.session.findUnique({
     where: { sessionUID: BigInt.asIntN(64, packet.header.sessionUID) },
   });
-  if (!session) return;
+  if (!session) return false;
 
-  await prisma.event.create({
-    data: {
-      sessionId: session.id,
-      eventCode: packet.eventStringCode,
-      details: packet.eventDetails as any,
-    },
-  });
+  const sessionTimeMs = Number.isFinite(packet.header.sessionTime)
+    ? Math.max(0, Math.round(packet.header.sessionTime * 1000))
+    : null;
+  const details = JSON.stringify(packet.eventDetails ?? null);
+
+  await prisma.$executeRaw(
+    Prisma.sql`
+      INSERT INTO events ("sessionId", "eventCode", timestamp, "sessionTimeMs", details)
+      VALUES (${session.id}, ${packet.eventStringCode}, ${new Date()}, ${sessionTimeMs}, CAST(${details} AS JSONB))
+    `
+  );
+
+  return true;
 }
 
 export async function writeFinalClassification(packet: PacketFinalClassificationData): Promise<void> {

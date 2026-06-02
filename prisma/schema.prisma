@@ -68,6 +68,7 @@ model Event {
   session       Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   eventCode     String
   timestamp     DateTime @default(now())
+  sessionTimeMs Int?
   details       Json?
 
   @@index([sessionId, eventCode])

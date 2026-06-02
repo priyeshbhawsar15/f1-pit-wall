@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     const allowedTables = [
       'telemetry_samples', 'motion_samples', 'lap_data_samples',
-      'car_status_samples', 'car_damage_samples',
+      'car_damage_samples',
     ];
     if (!allowedTables.includes(table)) {
       return NextResponse.json({ error: 'Invalid table' }, { status: 400 });
