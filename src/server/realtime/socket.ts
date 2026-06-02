@@ -10,10 +10,27 @@ export function initSocketIO(httpServer: HttpServer): SocketIOServer {
     transports: ['websocket', 'polling'],
   });
 
+  io.engine.on('connection_error', (err) => {
+    console.error('[Socket.IO] Connection error', {
+      code: err.code,
+      message: err.message,
+      origin: err.req.headers.origin,
+      host: err.req.headers.host,
+      url: err.req.url,
+      context: err.context,
+    });
+  });
+
   io.on('connection', (socket) => {
-    console.log(`[Socket.IO] Client connected: ${socket.id}`);
-    socket.on('disconnect', () => {
-      console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
+    console.log('[Socket.IO] Client connected', {
+      id: socket.id,
+      transport: socket.conn.transport.name,
+      origin: socket.handshake.headers.origin,
+      host: socket.handshake.headers.host,
+      address: socket.handshake.address,
+    });
+    socket.on('disconnect', (reason) => {
+      console.log('[Socket.IO] Client disconnected', { id: socket.id, reason });
     });
   });
 

@@ -42,7 +42,6 @@ services:
       REDIS_URL: redis://redis:6379
       UDP_HOST: "0.0.0.0"
       UDP_PORT: "20777"
-      NEXT_PUBLIC_SOCKET_URL: http://localhost:3333
     depends_on:
       timescaledb:
         condition: service_healthy

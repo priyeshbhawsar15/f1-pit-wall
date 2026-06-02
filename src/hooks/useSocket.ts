@@ -9,18 +9,30 @@ export function useSocket() {
   const store = useTelemetryStore();
 
   useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3333';
+    const configuredUrl = process.env.NEXT_PUBLIC_SOCKET_URL?.trim();
+    const url = configuredUrl || window.location.origin;
     const socket = io(url, { transports: ['websocket', 'polling'] });
     socketRef.current = socket;
 
     socket.on('connect', () => {
       store.setConnected(true);
-      console.log('[Socket] Connected');
+      console.log('[Socket] Connected', { url, transport: socket.io.engine.transport.name });
     });
 
-    socket.on('disconnect', () => {
+    socket.on('connect_error', (error) => {
       store.setConnected(false);
-      console.log('[Socket] Disconnected');
+      console.error('[Socket] Connection error', {
+        url,
+        origin: window.location.origin,
+        message: error.message,
+        description: (error as any).description,
+        context: (error as any).context,
+      });
+    });
+
+    socket.on('disconnect', (reason) => {
+      store.setConnected(false);
+      console.log('[Socket] Disconnected', { url, reason });
     });
 
     socket.on('motion', (data: any) => {
