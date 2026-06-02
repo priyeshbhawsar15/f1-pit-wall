@@ -12,6 +12,8 @@ export default function TyreStrategy() {
   const carDamage = useTelemetryStore((s) => s.carDamage);
   const telemetry = useTelemetryStore((s) => s.telemetry);
 
+  if (selectedCarIndex === null) return null;
+
   const status = carStatus.find((s) => s.i === selectedCarIndex);
   const damage = carDamage.find((d) => d.i === selectedCarIndex);
   const telem = telemetry.find((t) => t.i === selectedCarIndex);

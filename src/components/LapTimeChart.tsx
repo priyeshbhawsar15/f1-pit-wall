@@ -12,6 +12,7 @@ const BMW_FONT = { fontFamily: "var(--font-ui)" };
 export default function LapTimeChart() {
   const lapHistory = useTelemetryStore((s) => s.lapHistory);
   const drivers = useTelemetryStore((s) => s.drivers);
+  const lapData = useTelemetryStore((s) => s.lapData);
   const selectedCarIndex = useTelemetryStore((s) => s.selectedCarIndex);
 
   const chartData = useMemo(() => {
@@ -35,8 +36,17 @@ export default function LapTimeChart() {
     for (const entry of lapHistory) {
       seen.add(entry.carIndex);
     }
-    return drivers.filter((d) => seen.has(d.i)).slice(0, 6);
-  }, [lapHistory, drivers]);
+    return drivers
+      .filter((d) => d.ai === 0 && seen.has(d.i))
+      .sort((a, b) => {
+        const aPos = lapData.find((entry) => entry.i === a.i)?.pos ?? Number.MAX_SAFE_INTEGER;
+        const bPos = lapData.find((entry) => entry.i === b.i)?.pos ?? Number.MAX_SAFE_INTEGER;
+        if (aPos !== bPos) return aPos - bPos;
+        return a.i - b.i;
+      })
+      .slice(0, 2);
+  }, [drivers, lapData, lapHistory]);
+  const hasSelectedHumanDriver = selectedCarIndex !== null && activeDrivers.some((driver) => driver.i === selectedCarIndex);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload) return null;
@@ -67,12 +77,32 @@ export default function LapTimeChart() {
     >
       <div className="card-header">
         <span className="card-title">Lap Times</span>
-        <span className="text-[9px] font-mono text-[var(--muted-foreground)]">{chartData.length} laps</span>
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          <span className="text-[9px] font-mono text-[var(--muted-foreground)]">{chartData.length} laps</span>
+          {activeDrivers.map((driver) => {
+            const isSelected = selectedCarIndex === driver.i;
+            return (
+              <span
+                key={driver.i}
+                className="px-2 py-0.5 text-[8px] uppercase tracking-wider border"
+                style={{
+                  ...BMW_FONT,
+                  borderRadius: 0,
+                  borderColor: TEAM_COLORS[driver.team] || '#666',
+                  color: TEAM_COLORS[driver.team] || '#666',
+                  opacity: !hasSelectedHumanDriver || isSelected ? 1 : 0.6,
+                }}
+              >
+                {driver.name || `Car ${driver.i}`}
+              </span>
+            );
+          })}
+        </div>
       </div>
       <div className="p-3 h-64">
-        {chartData.length === 0 ? (
+        {chartData.length === 0 || activeDrivers.length === 0 ? (
           <div className="flex items-center justify-center h-full text-[10px] text-[var(--muted-foreground)]" style={BMW_FONT}>
-            WAITING FOR LAP DATA
+            WAITING FOR HUMAN LAP DATA
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
@@ -98,10 +128,10 @@ export default function LapTimeChart() {
                   type="monotone"
                   dataKey={`car_${d.i}`}
                   stroke={TEAM_COLORS[d.team] || '#666'}
-                  strokeWidth={d.i === selectedCarIndex ? 2.5 : 1.5}
+                  strokeWidth={!hasSelectedHumanDriver ? 2 : d.i === selectedCarIndex ? 2.5 : 1.5}
                   dot={false}
                   connectNulls
-                  opacity={d.i === selectedCarIndex ? 1 : 0.5}
+                  opacity={!hasSelectedHumanDriver || d.i === selectedCarIndex ? 1 : 0.45}
                 />
               ))}
             </LineChart>

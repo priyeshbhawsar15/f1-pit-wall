@@ -9,6 +9,8 @@ export default function TelemetryPanel() {
   const telemetry = useTelemetryStore((s) => s.telemetry);
   const drivers = useTelemetryStore((s) => s.drivers);
 
+  if (selectedCarIndex === null) return null;
+
   const car = telemetry.find((t) => t.i === selectedCarIndex);
   const driver = drivers.find((d) => d.i === selectedCarIndex);
   const teamColor = driver ? (TEAM_COLORS[driver.team] || '#555') : '#555';

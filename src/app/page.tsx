@@ -12,6 +12,7 @@ import EventFeed from '@/components/EventFeed';
 import LapTimeChart from '@/components/LapTimeChart';
 import PositionChart from '@/components/PositionChart';
 import CarSetupComparison from '@/components/CarSetupComparison';
+import HumanPlayersOverview from '@/components/HumanPlayersOverview';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const tabVariants = {
@@ -23,6 +24,7 @@ const tabVariants = {
 export default function Dashboard() {
   useSocket();
   const activeTab = useTelemetryStore((s) => s.activeTab);
+  const selectedCarIndex = useTelemetryStore((s) => s.selectedCarIndex);
 
   return (
     <div className="flex flex-col h-screen">
@@ -40,17 +42,20 @@ export default function Dashboard() {
             transition={{ duration: 0.2 }}
             className="flex-1 grid grid-cols-12 gap-3 p-3 overflow-hidden min-h-0"
           >
-            <div className="col-span-3 overflow-y-auto min-h-0">
+            <div className="col-span-12 xl:col-span-4 min-h-0 h-full">
               <Leaderboard />
             </div>
-            <div className="col-span-5 flex flex-col gap-3 overflow-y-auto min-h-0">
-              <TrackMap />
+            <div className="col-span-12 xl:col-span-8 flex flex-col gap-3 overflow-y-auto min-h-0">
+              <HumanPlayersOverview />
+              {selectedCarIndex !== null && (
+                <div className="grid grid-cols-1 2xl:grid-cols-3 gap-3">
+                  <TelemetryPanel />
+                  <ERSMonitor />
+                  <TyreStrategy />
+                </div>
+              )}
               <EventFeed />
-            </div>
-            <div className="col-span-4 flex flex-col gap-3 overflow-y-auto min-h-0">
-              <TelemetryPanel />
-              <ERSMonitor />
-              <TyreStrategy />
+              <TrackMap />
             </div>
           </motion.div>
         )}
@@ -95,8 +100,18 @@ export default function Dashboard() {
               <CarSetupComparison />
             </div>
             <div className="col-span-4 flex flex-col gap-3 overflow-y-auto min-h-0">
-              <TelemetryPanel />
-              <TyreStrategy />
+              {selectedCarIndex !== null ? (
+                <>
+                  <TelemetryPanel />
+                  <TyreStrategy />
+                </>
+              ) : (
+                <div className="card p-8 text-center">
+                  <span className="text-[10px] text-[var(--muted-foreground)]" style={{ fontFamily: 'var(--font-ui)' }}>
+                    SELECT A DRIVER FROM THE LEADERBOARD
+                  </span>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

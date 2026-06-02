@@ -162,7 +162,7 @@ export interface TelemetryState {
   events: EventInfo[];
   lapHistory: LapHistoryEntry[];
   positionHistory: PositionHistoryEntry[];
-  selectedCarIndex: number;
+  selectedCarIndex: number | null;
   activeTab: 'live' | 'charts' | 'setup';
 
   setConnected: (v: boolean) => void;
@@ -177,7 +177,7 @@ export interface TelemetryState {
   addEvent: (e: EventInfo) => void;
   addLapHistory: (entries: LapHistoryEntry[]) => void;
   addPositionHistory: (entries: PositionHistoryEntry[]) => void;
-  setSelectedCarIndex: (i: number) => void;
+  setSelectedCarIndex: (i: number | null) => void;
   setActiveTab: (tab: 'live' | 'charts' | 'setup') => void;
 }
 
@@ -194,7 +194,7 @@ export const useTelemetryStore = create<TelemetryState>((set) => ({
   events: [],
   lapHistory: [],
   positionHistory: [],
-  selectedCarIndex: 0,
+  selectedCarIndex: null,
   activeTab: 'live',
 
   setConnected: (v) => set({ connected: v }),

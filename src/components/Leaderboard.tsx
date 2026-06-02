@@ -69,7 +69,7 @@ export default function Leaderboard() {
                   opacity: { duration: 0.2 },
                   x: { duration: 0.2 },
                 }}
-                onClick={() => setSelectedCarIndex(car.i)}
+                onClick={() => setSelectedCarIndex(isSelected ? null : car.i)}
                 className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[var(--hairline-strong)] transition-colors ${
                   battlingHumans.has(car.i)
                     ? 'bg-[var(--m-blue-light)]/[0.06] border-l-2 border-l-[var(--m-blue-light)]'

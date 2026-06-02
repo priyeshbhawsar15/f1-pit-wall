@@ -12,6 +12,8 @@ export default function ERSMonitor() {
   const selectedCarIndex = useTelemetryStore((s) => s.selectedCarIndex);
   const carStatus = useTelemetryStore((s) => s.carStatus);
 
+  if (selectedCarIndex === null) return null;
+
   const status = carStatus.find((s) => s.i === selectedCarIndex);
 
   const storePct = status ? Math.min((status.ersStore / MAX_ERS_STORE) * 100, 100) : 0;
