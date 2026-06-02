@@ -208,6 +208,15 @@ export default function SessionReplayPage() {
   const trackName = session ? (TRACK_NAMES[session.trackId] || 'Unknown') : '---';
   const sessionType = session ? (SESSION_TYPES[session.sessionType] || '---') : '---';
   const progressPct = totalFrames > 0 ? ((currentTimeIdx / (totalFrames - 1)) * 100) : 0;
+  const sortedParticipants = session
+    ? [...session.participants].sort((a, b) => {
+        const aLinked = Boolean(a.humanProfileId);
+        const bLinked = Boolean(b.humanProfileId);
+        if (aLinked !== bLinked) return aLinked ? -1 : 1;
+        if (a.aiControlled !== b.aiControlled) return a.aiControlled ? 1 : -1;
+        return a.carIndex - b.carIndex;
+      })
+    : [];
 
   return (
     <div className="min-h-screen">
@@ -322,7 +331,7 @@ export default function SessionReplayPage() {
                     <span className="text-[10px] text-[var(--muted)]">{session.participants.length}</span>
                   </div>
                   <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
-                    {session.participants.map((p) => {
+                    {sortedParticipants.map((p) => {
                       const linked = profiles.find((pr) => pr.id === p.humanProfileId);
                       return (
                         <div key={p.carIndex}>

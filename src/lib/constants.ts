@@ -68,6 +68,43 @@ export const TRACK_NAMES: Record<number, string> = {
   33: 'Lusail Short',
 };
 
+export const TRACK_FLAGS: Record<number, string> = {
+  0: '🇦🇺',
+  1: '🇫🇷',
+  2: '🇨🇳',
+  3: '🇧🇭',
+  4: '🇪🇸',
+  5: '🇲🇨',
+  6: '🇨🇦',
+  7: '🇬🇧',
+  8: '🇩🇪',
+  9: '🇭🇺',
+  10: '🇧🇪',
+  11: '🇮🇹',
+  12: '🇸🇬',
+  13: '🇯🇵',
+  14: '🇦🇪',
+  15: '🇺🇸',
+  16: '🇧🇷',
+  17: '🇦🇹',
+  18: '🇷🇺',
+  19: '🇲🇽',
+  20: '🇦🇿',
+  21: '🇧🇭',
+  22: '🇬🇧',
+  23: '🇺🇸',
+  24: '🇯🇵',
+  25: '🇻🇳',
+  26: '🇳🇱',
+  27: '🇮🇹',
+  28: '🇵🇹',
+  29: '🇸🇦',
+  30: '🇺🇸',
+  31: '🇺🇸',
+  32: '🇶🇦',
+  33: '🇶🇦',
+};
+
 export const TEAM_NAMES: Record<number, string> = {
   0: 'Mercedes',
   1: 'Ferrari',
@@ -109,6 +146,7 @@ export const SESSION_TYPES: Record<number, string> = {
   11: 'R2',
   12: 'R3',
   13: 'Time Trial',
+  15: 'Race',
 };
 
 export const WEATHER_TYPES: Record<number, string> = {

@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Flag, Plus, Trash2, Trophy, TrendingUp, Zap } from 'lucide-react';
+import { Flag, Plus, Trash2, Trophy, TrendingUp } from 'lucide-react';
 import { TRACK_NAMES, SESSION_TYPES } from '@/lib/constants';
-import { formatLapTime } from '@/lib/utils';
 import AppHeader from '@/components/AppHeader';
+import StandingsTable, { type StandingsPlayer } from '@/components/StandingsTable';
+import StandingsHighlights from '@/components/StandingsHighlights';
+import RaceResultCard from '@/components/RaceResultCard';
 
 const BMW_FONT = { fontFamily: "var(--font-ui)" };
 
@@ -14,8 +16,8 @@ interface SeasonDetail {
   id: string; name: string; isActive: boolean; startDate: string | null; endDate: string | null;
   races: {
     session: {
-      id: string; trackId: number; sessionType: number; createdAt: string;
-      participants: { carIndex: number; humanProfileId: string | null; humanProfile: { id: string; name: string; color: string } | null }[];
+      id: string; sessionUID: string; trackId: number; sessionType: number; createdAt: string;
+      participants: { carIndex: number; humanProfileId: string | null; humanProfile: { id: string; name: string; color: string; avatarUrl: string | null } | null }[];
       finalClassifications: { carIndex: number; position: number; points: number; bestLapTimeInMS: number; resultStatus: number; gridPosition: number }[];
       events: { eventCode: string; details: any }[];
     };
@@ -73,12 +75,12 @@ function computeStandings(season: SeasonDetail): PlayerStats[] {
   return Array.from(map.values()).sort((a, b) => b.points - a.points);
 }
 
-function ChampionshipPredictor({ standings, completedRaces }: { standings: PlayerStats[]; completedRaces: number }) {
+function ChampionshipPredictor({ standings, completedRaces }: { standings: StandingsPlayer[]; completedRaces: number }) {
   const [extraRaces, setExtraRaces] = useState(3);
 
   const projected = standings.map((p) => {
-    const avgPts = completedRaces > 0 ? p.points / completedRaces : 0;
-    return { ...p, projected: Math.round(p.points + avgPts * extraRaces) };
+    const avgPts = completedRaces > 0 ? p.stats.points / completedRaces : 0;
+    return { ...p, projected: Math.round(p.stats.points + avgPts * extraRaces) };
   }).sort((a, b) => b.projected - a.projected);
 
   const maxPts = projected[0]?.projected || 1;
@@ -117,7 +119,7 @@ function ChampionshipPredictor({ standings, completedRaces }: { standings: Playe
                   <div className="text-right">
                     <span className="text-xs font-black font-mono tabular-nums" style={{ color: p.color }}>{p.projected}</span>
                     <span className="text-[9px] text-[var(--muted-foreground)] ml-1">pts</span>
-                    <span className="text-[9px] text-[var(--muted-foreground)] ml-2">({p.points} now)</span>
+                    <span className="text-[9px] text-[var(--muted-foreground)] ml-2">({p.stats.points} now)</span>
                   </div>
                 </div>
                 <div className="h-1.5 bg-[var(--surface)] overflow-hidden" style={{ borderRadius: 0 }}>
@@ -134,7 +136,7 @@ function ChampionshipPredictor({ standings, completedRaces }: { standings: Playe
           })}
         </div>
         <p className="text-[9px] text-[var(--muted-foreground)] mt-3">
-          Projection based on average {completedRaces > 0 ? Math.round(standings.reduce((s, p) => s + p.points, 0) / standings.length / completedRaces * 10) / 10 : 0} pts/race per player over {completedRaces} completed races.
+          Projection based on average {completedRaces > 0 ? Math.round(standings.reduce((sum, player) => sum + player.stats.points, 0) / standings.length / completedRaces * 10) / 10 : 0} pts/race per player over {completedRaces} completed races.
         </p>
       </div>
     </motion.div>
@@ -144,18 +146,21 @@ function ChampionshipPredictor({ standings, completedRaces }: { standings: Playe
 export default function SeasonDetailPage() {
   const { id } = useParams() as { id: string };
   const [season, setSeason] = useState<SeasonDetail | null>(null);
+  const [standings, setStandings] = useState<StandingsPlayer[]>([]);
   const [allSessions, setAllSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddRace, setShowAddRace] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
 
   async function load() {
-    const [seasonRes, sessionsRes] = await Promise.all([
+    const [seasonRes, sessionsRes, standingsRes] = await Promise.all([
       fetch(`/api/seasons/${id}`).then((r) => r.json()),
       fetch('/api/sessions').then((r) => r.json()),
+      fetch(`/api/standings?seasonId=${id}`).then((r) => r.json()),
     ]);
     setSeason(seasonRes);
     if (Array.isArray(sessionsRes)) setAllSessions(sessionsRes);
+    if (Array.isArray(standingsRes)) setStandings(standingsRes);
     setLoading(false);
   }
 
@@ -174,7 +179,7 @@ export default function SeasonDetailPage() {
 
   async function removeRace(sessionId: string) {
     await fetch(`/api/seasons/${id}/races?sessionId=${sessionId}`, { method: 'DELETE' });
-    load();
+    await load();
   }
 
   if (loading) return (
@@ -189,7 +194,6 @@ export default function SeasonDetailPage() {
     </div>
   );
 
-  const standings = computeStandings(season);
   const linkedSessionIds = new Set(season.races.map((r) => r.session.id));
   const unlinkedSessions = allSessions.filter((s: any) => !linkedSessionIds.has(s.id));
 
@@ -232,69 +236,14 @@ export default function SeasonDetailPage() {
         {/* Standings */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <h2 className="text-[10px] uppercase tracking-wider text-[var(--muted-foreground)] mb-3" style={BMW_FONT}>Driver Standings</h2>
-          {standings.length === 0 ? (
-            <div className="card p-8 text-center">
-              <Trophy size={24} className="text-[var(--muted)] mx-auto mb-2" />
-              <p className="text-sm text-[var(--muted-foreground)]">No human players linked to any race in this season yet.</p>
-            </div>
-          ) : (
-            <div className="card overflow-hidden">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b border-[var(--card-border)]">
-                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] w-8" style={BMW_FONT}>#</th>
-                    <th className="text-left px-4 py-2 text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Driver</th>
-                    {season.races.map((r) => (
-                      <th key={r.session.id} className="text-center px-2 py-2 text-[8px] text-[var(--muted-foreground)] max-w-[40px]" title={TRACK_NAMES[r.session.trackId]}>
-                        {(TRACK_NAMES[r.session.trackId] || '?').slice(0, 3).toUpperCase()}
-                      </th>
-                    ))}
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--yellow)]" style={BMW_FONT}>PTS</th>
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-yellow-400" style={BMW_FONT}>W</th>
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--green)]" style={BMW_FONT}>OVT</th>
-                    <th className="text-center px-3 py-2 text-[9px] uppercase tracking-wider text-[var(--purple)]" style={BMW_FONT}>FL</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {standings.map((p, i) => {
-                    const posColor = i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : undefined;
-                    return (
-                      <tr key={p.id} className="border-b border-[var(--card-border)] hover:bg-white/[0.03] transition-colors cursor-pointer"
-                        onClick={() => window.location.href = `/players/${p.id}`}>
-                        <td className="px-4 py-3 font-black font-mono text-sm" style={posColor ? { color: posColor } : { color: 'var(--muted-foreground)' }}>{i + 1}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-[10px] font-black text-white" style={{ backgroundColor: p.color }}>
-                              {p.name.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="font-bold" style={BMW_FONT}>{p.name}</span>
-                          </div>
-                        </td>
-                        {season.races.map((r) => {
-                          const result = p.raceResults.find((rr) => rr.sessionId === r.session.id);
-                          const pc = result?.position === 1 ? '#FFD700' : result?.position === 2 ? '#C0C0C0' : result?.position === 3 ? '#CD7F32' : undefined;
-                          return (
-                            <td key={r.session.id} className="px-2 py-3 text-center font-mono text-xs">
-                              {result ? (
-                                <span style={pc ? { color: pc } : { color: 'var(--muted-foreground)' }}>
-                                  {result.position ? `P${result.position}` : '—'}
-                                </span>
-                              ) : <span className="text-[var(--muted)]">—</span>}
-                            </td>
-                          );
-                        })}
-                        <td className="px-3 py-3 text-center font-black font-mono tabular-nums" style={{ color: 'var(--yellow)' }}>{p.points}</td>
-                        <td className="px-3 py-3 text-center font-mono text-yellow-400">{p.wins}</td>
-                        <td className="px-3 py-3 text-center font-mono text-[var(--green)]">{p.overtakes}</td>
-                        <td className="px-3 py-3 text-center font-mono text-[var(--purple)]">{p.fastestLaps}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <StandingsTable
+            standings={standings}
+            emptyTitle="No standings yet"
+            emptyMessage="No human players linked to any race in this season yet."
+          />
         </motion.div>
+
+        {standings.length > 0 && <StandingsHighlights standings={standings} />}
 
         {/* Championship Predictor — only shown when season is active and has standings */}
         {season.isActive && standings.length > 0 && totalRaces > 0 && (
@@ -330,29 +279,45 @@ export default function SeasonDetailPage() {
 
           <div className="space-y-1.5">
             {season.races.map((r, i) => (
-              <motion.div key={r.session.id} className="card p-3 flex items-center gap-3 group"
-                initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
-                <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 bg-[var(--surface-elevated)]" style={{ borderRadius: 0 }}>
-                  <span className="text-[9px] font-black text-[var(--foreground)]">{i + 1}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm">{TRACK_NAMES[r.session.trackId] || `Track ${r.session.trackId}`}</div>
-                  <div className="text-[10px] text-[var(--muted-foreground)]">
-                    {SESSION_TYPES[r.session.sessionType]} · {new Date(r.session.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {r.session.participants.filter((p) => p.humanProfile).map((p) => (
-                    <div key={p.carIndex} className="w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[8px] font-black text-white"
-                      title={p.humanProfile!.name} style={{ backgroundColor: p.humanProfile!.color }}>
-                      {p.humanProfile!.name.charAt(0).toUpperCase()}
-                    </div>
-                  ))}
-                </div>
-                <button onClick={() => removeRace(r.session.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--f1-red)] hover:text-red-400">
-                  <Trash2 size={12} />
-                </button>
+              <motion.div key={r.session.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
+                <RaceResultCard
+                  trackId={r.session.trackId}
+                  sessionType={r.session.sessionType}
+                  createdAt={r.session.createdAt}
+                  href={`/sessions/${r.session.id}?uid=${r.session.sessionUID}`}
+                  players={r.session.participants
+                    .filter((participant) => participant.humanProfile)
+                    .map((participant) => {
+                      const profile = participant.humanProfile!;
+                      const classification = r.session.finalClassifications.find((item) => item.carIndex === participant.carIndex);
+                      return {
+                        id: profile.id,
+                        name: profile.name,
+                        color: profile.color,
+                        avatarUrl: profile.avatarUrl,
+                        position: classification?.position ?? null,
+                        points: classification?.points ?? 0,
+                        resultStatus: classification?.resultStatus ?? null,
+                      };
+                    })
+                    .sort((a, b) => {
+                      if (a.position === null && b.position === null) return a.name.localeCompare(b.name);
+                      if (a.position === null) return 1;
+                      if (b.position === null) return -1;
+                      return a.position - b.position;
+                    })}
+                  action={
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        removeRace(r.session.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--f1-red)] hover:text-red-400"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  }
+                />
               </motion.div>
             ))}
             {season.races.length === 0 && (
