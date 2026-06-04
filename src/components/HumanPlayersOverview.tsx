@@ -13,7 +13,11 @@ export default function HumanPlayersOverview() {
   const drivers = useTelemetryStore((s) => s.drivers);
   const lapData = useTelemetryStore((s) => s.lapData);
   const carStatus = useTelemetryStore((s) => s.carStatus);
+  const carTelemetry2 = useTelemetryStore((s) => s.carTelemetry2);
+  const session = useTelemetryStore((s) => s.session);
   const selectedCarIndex = useTelemetryStore((s) => s.selectedCarIndex);
+
+  const is2026 = session?.formula === 13;
 
   const selectedDriver = selectedCarIndex !== null
     ? drivers.find((driver) => driver.i === selectedCarIndex)
@@ -25,6 +29,7 @@ export default function HumanPlayersOverview() {
       .map((driver) => {
         const lap = lapData.find((entry) => entry.i === driver.i);
         const status = carStatus.find((entry) => entry.i === driver.i);
+        const aero = carTelemetry2.find((entry) => entry.i === driver.i);
         const tyreInfo = status ? VISUAL_TYRE_COMPOUNDS[status.tyre] : null;
         const ersPct = status ? Math.min((status.ersStore / MAX_ERS_STORE) * 100, 100) : null;
         const raceState = lap?.pit
@@ -37,6 +42,7 @@ export default function HumanPlayersOverview() {
           driver,
           lap,
           status,
+          aero,
           tyreInfo,
           ersPct,
           raceState,
@@ -49,7 +55,7 @@ export default function HumanPlayersOverview() {
         return a.driver.i - b.driver.i;
       })
       .slice(0, 2);
-  }, [carStatus, drivers, lapData]);
+  }, [carStatus, carTelemetry2, drivers, lapData]);
 
   return (
     <motion.div
@@ -72,7 +78,7 @@ export default function HumanPlayersOverview() {
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-            {humanPlayers.map(({ driver, lap, status, tyreInfo, ersPct, raceState }, index) => {
+            {humanPlayers.map(({ driver, lap, status, aero, tyreInfo, ersPct, raceState }, index) => {
               const isSelected = driver.i === selectedCarIndex;
               const teamColor = TEAM_COLORS[driver.team] || '#666';
               const gapValue = !lap
@@ -136,8 +142,25 @@ export default function HumanPlayersOverview() {
                       { label: 'Lap', value: lap ? `${lap.lap}` : '--' },
                       { label: 'Last Lap', value: lap?.lastLap ? formatLapTime(lap.lastLap) : '--:--.---' },
                       { label: 'Tyres', value: tyreInfo ? `${tyreInfo.name} · ${status?.tyreAge ?? '--'}L` : '---' },
-                      { label: 'ERS', value: ersPct !== null ? `${Math.round(ersPct)}%` : '---' },
-                      { label: 'Fuel', value: status ? `${status.fuelLaps.toFixed(1)} LAPS` : '---' },
+                      ...(is2026 ? [
+                        {
+                          label: 'Overtake',
+                          value: aero?.otActive ? 'ACTIVE' : aero?.otAvail ? 'READY' : aero ? `${aero.otDist}m` : '---',
+                          accent: aero?.otActive ? 'var(--warning)' : aero?.otAvail ? 'var(--success)' : undefined,
+                        },
+                        {
+                          label: 'Aero',
+                          value: aero?.aeroAvail ? (aero.aeroMode === 1 ? 'STRAIGHT' : 'CORNER') : '---',
+                          accent: aero?.aeroAvail && aero.aeroMode === 1 ? 'var(--success)' : undefined,
+                        },
+                      ] : [
+                        { label: 'ERS', value: ersPct !== null ? `${Math.round(ersPct)}%` : '---' },
+                        { label: 'Fuel', value: status ? `${status.fuelLaps.toFixed(1)} LAPS` : '---' },
+                      ]),
+                      ...(!is2026 ? [] : [
+                        { label: 'ERS', value: ersPct !== null ? `${Math.round(ersPct)}%` : '---' },
+                        { label: 'Fuel', value: status ? `${status.fuelLaps.toFixed(1)} LAPS` : '---' },
+                      ]),
                       { label: 'Penalties', value: lap ? `${lap.penalties}s` : '0s', accent: lap && lap.penalties > 0 ? 'var(--warning)' : undefined },
                       { label: 'State', value: raceState, accent: raceState === 'PIT' ? 'var(--warning)' : raceState.includes('PEN') ? 'var(--m-red)' : 'var(--success)' },
                     ].map((stat) => (

@@ -32,6 +32,7 @@ export enum RedisChannel {
   CarSetups = 'f1:carsetups',
   LapHistory = 'f1:laphistory',
   PositionHistory = 'f1:positionhistory',
+  CarTelemetry2 = 'f1:cartelemetry2',
 }
 
 export function publish(channel: RedisChannel, data: unknown): void {

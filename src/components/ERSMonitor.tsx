@@ -24,7 +24,12 @@ export default function ERSMonitor() {
     Medium: 'var(--m-blue-dark)',
     Hotlap: 'var(--warning)',
     Overtake: 'var(--success)',
+    Boost: 'var(--success)',
   };
+
+  const harvestLimitPct = status && status.ersLimit > 0
+    ? Math.min((status.ersK + status.ersH) / status.ersLimit * 100, 100)
+    : null;
 
   const barColor = storePct > 50 ? 'var(--success)' : storePct > 20 ? 'var(--warning)' : 'var(--m-red)';
 
@@ -109,6 +114,31 @@ export default function ERSMonitor() {
             {status ? (status.ersDeployed / 1000000).toFixed(3) : '-.---'} <span className="text-[10px] text-[var(--muted)]">MJ</span>
           </span>
         </div>
+
+        {/* 2026 Harvest Limit */}
+        {status && status.ersLimit > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider" style={BMW_FONT}>
+                Harvest Limit
+              </span>
+              <span className="text-[11px] font-mono font-bold tabular-nums" style={{ color: 'var(--success)' }}>
+                {(status.ersLimit / 1000000).toFixed(2)} <span className="text-[10px] text-[var(--muted)]">MJ</span>
+              </span>
+            </div>
+            <div className="h-1.5 bg-[var(--surface)] overflow-hidden" style={{ borderRadius: 0 }}>
+              <motion.div
+                className="h-full"
+                style={{ backgroundColor: harvestLimitPct !== null && harvestLimitPct > 90 ? 'var(--warning)' : 'var(--success)', borderRadius: 0 }}
+                animate={{ width: `${harvestLimitPct ?? 0}%` }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+              />
+            </div>
+            <div className="text-[9px] text-[var(--muted-foreground)] mt-1" style={BMW_FONT}>
+              {harvestLimitPct !== null ? `${Math.round(harvestLimitPct)}% of limit harvested` : ''}
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

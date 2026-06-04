@@ -15,7 +15,8 @@ import { parseTyreSetsData } from './parser/tyre-sets';
 import { parseMotionExData } from './parser/motion-ex';
 import { parseTimeTrialData } from './parser/time-trial';
 import { parseLapPositionsData } from './parser/lap-positions';
-import { PacketId, DEFAULT_UDP_PORT, MAX_CARS } from '../lib/constants';
+import { parseCarTelemetry2Data } from './parser/car-telemetry2';
+import { PacketId, DEFAULT_UDP_PORT, MAX_CARS, maxCarsForFormat, isFormat2026, HEADER_SIZE, MAX_CARS_2025, MAX_CARS_2026, BYTES_PER_CAR_MOTION_2025 } from '../lib/constants';
 import { publish, RedisChannel } from './realtime/redis';
 import {
   writeMotionSamples,
@@ -33,6 +34,7 @@ let telemetryThrottleCounter = 0;
 let lapDataThrottleCounter = 0;
 let statusThrottleCounter = 0;
 let damageThrottleCounter = 0;
+let formatLoggedForSession = '';
 
 const humanCarIndicesBySession = new Map<string, Set<number>>();
 const pendingEventsBySession = new Map<string, PacketEventData[]>();
@@ -121,6 +123,12 @@ export function startUDPListener(): dgram.Socket {
 
       switch (header.packetId) {
         case PacketId.Motion: {
+          if (formatLoggedForSession !== sessionUID) {
+            formatLoggedForSession = sessionUID;
+            const expected2025Motion = HEADER_SIZE + MAX_CARS_2025 * BYTES_PER_CAR_MOTION_2025;
+            const fmt26 = isFormat2026(header.packetFormat, header.gameYear, msg.length, expected2025Motion);
+            console.log(`[UDP] Session ${sessionUID} — packetFormat=${header.packetFormat} gameYear=${header.gameYear} bufLen=${msg.length} → treating as ${fmt26 ? '2026' : '2025'} (${fmt26 ? MAX_CARS_2026 : MAX_CARS_2025} cars)`);
+          }
           const packet = parseMotionData(msg, header);
           motionThrottleCounter++;
           if (motionThrottleCounter % REALTIME_THROTTLE === 0) {
@@ -217,6 +225,11 @@ export function startUDPListener(): dgram.Socket {
 
         case PacketId.Participants: {
           const packet = parseParticipantsData(msg, header);
+          if (formatLoggedForSession === sessionUID) {
+            const teams = packet.participants.slice(0, Math.min(5, packet.numActiveCars)).map((p) => p.teamId);
+            console.log(`[UDP] Participants bufLen=${msg.length} numActive=${packet.numActiveCars} first5teams=${JSON.stringify(teams)}`);
+            formatLoggedForSession = '';
+          }
           rememberHumanCarIndicesFromParticipants(sessionUID, packet);
           const slim = packet.participants.slice(0, packet.numActiveCars).map((p, idx) => ({
             i: idx,
@@ -284,6 +297,7 @@ export function startUDPListener(): dgram.Socket {
               ersMode: s.ersDeployMode,
               ersK: Math.round(s.ersHarvestedThisLapMGUK),
               ersH: Math.round(s.ersHarvestedThisLapMGUH),
+              ersLimit: Math.round(s.ersHarvestLimitPerLap),
               ersDeployed: Math.round(s.ersDeployedThisLap),
               iceW: Math.round(s.enginePowerICE),
               mgukW: Math.round(s.enginePowerMGUK),
@@ -397,7 +411,8 @@ export function startUDPListener(): dgram.Socket {
           const packet = parseLapPositionsData(msg, header);
           const entries = [];
           for (let lap = 0; lap < packet.numLaps; lap++) {
-            for (let car = 0; car < 22; car++) {
+            const lapPositions = packet.positionForVehicleIdx[lap] ?? [];
+            for (let car = 0; car < lapPositions.length; car++) {
               const pos = packet.positionForVehicleIdx[lap][car];
               if (pos > 0) {
                 entries.push({
@@ -411,6 +426,23 @@ export function startUDPListener(): dgram.Socket {
           if (entries.length > 0) {
             publish(RedisChannel.PositionHistory, { sessionUID, entries });
           }
+          break;
+        }
+
+        case PacketId.CarTelemetry2: {
+          const packet = parseCarTelemetry2Data(msg, header);
+          const slim = packet.carTelemetry2Data.map((t, idx) => ({
+            i: idx,
+            aeroMode: t.activeAeroMode,
+            aeroAvail: t.activeAeroAvailable,
+            aeroDist: t.activeAeroActivationDistance,
+            otAvail: t.overtakeAvailable,
+            otActive: t.overtakeActive,
+            otDist: t.overtakeActivationDistance,
+            is26: t.regulations2026,
+            wrongWay: t.drivingWrongWay,
+          }));
+          publish(RedisChannel.CarTelemetry2, { sessionUID, cars: slim });
           break;
         }
 

@@ -95,6 +95,14 @@ export default function SessionInfo() {
             </span>
             <span className="text-[var(--hairline)] mx-1">|</span>
             <span className="text-[var(--muted)] text-[12px] tracking-wider uppercase">{sessionType}</span>
+            {session?.formula === 13 && (
+              <span
+                className="text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-[1px] bg-[var(--m-red)]/20 text-[var(--m-red)] border border-[var(--m-red)]/40"
+                style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}
+              >
+                F1 26
+              </span>
+            )}
           </motion.div>
 
           <div className="divider-v" />

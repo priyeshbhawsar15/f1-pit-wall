@@ -1,5 +1,5 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS } from '../../lib/constants';
+import { HEADER_SIZE, MAX_CARS_2025, MAX_CARS_2026, isFormat2026, BYTES_PER_CAR_TELEMETRY_2025, BYTES_PER_CAR_TELEMETRY_2026 } from '../../lib/constants';
 
 export interface CarTelemetryData {
   speed: number;
@@ -31,8 +31,14 @@ export interface PacketCarTelemetryData {
 export function parseCarTelemetryData(buf: Buffer, header: PacketHeader): PacketCarTelemetryData {
   const carTelemetryData: CarTelemetryData[] = [];
   let offset = HEADER_SIZE;
+  const is2026 = isFormat2026(header.packetFormat, header.gameYear, buf.length, HEADER_SIZE + MAX_CARS_2025 * BYTES_PER_CAR_TELEMETRY_2025 + 3);
+  const bytesPerCar = is2026 ? BYTES_PER_CAR_TELEMETRY_2026 : BYTES_PER_CAR_TELEMETRY_2025;
+  const maxCars = Math.min(
+    Math.floor((buf.length - HEADER_SIZE - 3) / bytesPerCar),
+    is2026 ? MAX_CARS_2026 : MAX_CARS_2025,
+  );
 
-  for (let i = 0; i < MAX_CARS; i++) {
+  for (let i = 0; i < maxCars; i++) {
     const speed = buf.readUInt16LE(offset); offset += 2;
     const throttle = buf.readFloatLE(offset); offset += 4;
     const steer = buf.readFloatLE(offset); offset += 4;
@@ -53,7 +59,12 @@ export function parseCarTelemetryData(buf: Buffer, header: PacketHeader): Packet
     const tyresInnerTemperature: number[] = [];
     for (let j = 0; j < 4; j++) { tyresInnerTemperature.push(buf.readUInt8(offset)); offset += 1; }
 
-    const engineTemperature = buf.readUInt16LE(offset); offset += 2;
+    let engineTemperature: number;
+    if (is2026) {
+      engineTemperature = buf.readUInt8(offset); offset += 1;
+    } else {
+      engineTemperature = buf.readUInt16LE(offset); offset += 2;
+    }
 
     const tyresPressure: number[] = [];
     for (let j = 0; j < 4; j++) { tyresPressure.push(buf.readFloatLE(offset)); offset += 4; }

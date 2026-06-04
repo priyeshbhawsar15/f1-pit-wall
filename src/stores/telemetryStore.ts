@@ -56,10 +56,23 @@ export interface CarStatusSlim {
   ersMode: number;
   ersK: number;
   ersH: number;
+  ersLimit: number;
   ersDeployed: number;
   iceW: number;
   mgukW: number;
   flags: number;
+}
+
+export interface CarTelemetry2Slim {
+  i: number;
+  aeroMode: number;    // 0 = corner, 1 = straight
+  aeroAvail: number;   // 0/1
+  aeroDist: number;    // metres until available
+  otAvail: number;     // 0/1
+  otActive: number;    // 0/1
+  otDist: number;      // metres until available
+  is26: number;        // 1 = 2026 regulations
+  wrongWay: number;    // 0/1
 }
 
 export interface CarDamageSlim {
@@ -159,6 +172,7 @@ export interface TelemetryState {
   carStatus: CarStatusSlim[];
   carDamage: CarDamageSlim[];
   carSetups: CarSetupSlim[];
+  carTelemetry2: CarTelemetry2Slim[];
   events: EventInfo[];
   lapHistory: LapHistoryEntry[];
   positionHistory: PositionHistoryEntry[];
@@ -174,6 +188,7 @@ export interface TelemetryState {
   setCarStatus: (s: CarStatusSlim[]) => void;
   setCarDamage: (d: CarDamageSlim[]) => void;
   setCarSetups: (s: CarSetupSlim[]) => void;
+  setCarTelemetry2: (d: CarTelemetry2Slim[]) => void;
   addEvent: (e: EventInfo) => void;
   addLapHistory: (entries: LapHistoryEntry[]) => void;
   addPositionHistory: (entries: PositionHistoryEntry[]) => void;
@@ -191,6 +206,7 @@ export const useTelemetryStore = create<TelemetryState>((set) => ({
   carStatus: [],
   carDamage: [],
   carSetups: [],
+  carTelemetry2: [],
   events: [],
   lapHistory: [],
   positionHistory: [],
@@ -206,6 +222,7 @@ export const useTelemetryStore = create<TelemetryState>((set) => ({
   setCarStatus: (s) => set({ carStatus: s }),
   setCarDamage: (d) => set({ carDamage: d }),
   setCarSetups: (s) => set({ carSetups: s }),
+  setCarTelemetry2: (d) => set({ carTelemetry2: d }),
   addEvent: (e) =>
     set((state) => ({
       events: [{ ...e, timestamp: Date.now() }, ...state.events].slice(0, 50),

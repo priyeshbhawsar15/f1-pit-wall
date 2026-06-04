@@ -79,6 +79,10 @@ export function useSocket() {
       if (data.entries) store.addPositionHistory(data.entries);
     });
 
+    socket.on('cartelemetry2', (data: any) => {
+      if (data.cars) store.setCarTelemetry2(data.cars);
+    });
+
     return () => {
       socket.disconnect();
     };

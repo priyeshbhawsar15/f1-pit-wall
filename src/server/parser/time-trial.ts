@@ -1,5 +1,5 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE } from '../../lib/constants';
+import { HEADER_SIZE, isFormat2026 } from '../../lib/constants';
 
 export interface TimeTrialDataSet {
   carIdx: number;
@@ -23,9 +23,9 @@ export interface PacketTimeTrialData {
   rivalDataSet: TimeTrialDataSet;
 }
 
-function parseTimeTrialDataSet(buf: Buffer, offset: number): { data: TimeTrialDataSet; newOffset: number } {
+function parseTimeTrialDataSet(buf: Buffer, offset: number, is2026: boolean): { data: TimeTrialDataSet; newOffset: number } {
   const carIdx = buf.readUInt8(offset); offset += 1;
-  const teamId = buf.readUInt8(offset); offset += 1;
+  const teamId = is2026 ? buf.readUInt16LE(offset) : buf.readUInt8(offset); offset += is2026 ? 2 : 1;
   const lapTimeInMS = buf.readUInt32LE(offset); offset += 4;
   const sector1TimeInMS = buf.readUInt32LE(offset); offset += 4;
   const sector2TimeInMS = buf.readUInt32LE(offset); offset += 4;
@@ -48,10 +48,11 @@ function parseTimeTrialDataSet(buf: Buffer, offset: number): { data: TimeTrialDa
 
 export function parseTimeTrialData(buf: Buffer, header: PacketHeader): PacketTimeTrialData {
   let offset = HEADER_SIZE;
+  const is2026 = isFormat2026(header.packetFormat, header.gameYear);
 
-  const r1 = parseTimeTrialDataSet(buf, offset); offset = r1.newOffset;
-  const r2 = parseTimeTrialDataSet(buf, offset); offset = r2.newOffset;
-  const r3 = parseTimeTrialDataSet(buf, offset); offset = r3.newOffset;
+  const r1 = parseTimeTrialDataSet(buf, offset, is2026); offset = r1.newOffset;
+  const r2 = parseTimeTrialDataSet(buf, offset, is2026); offset = r2.newOffset;
+  const r3 = parseTimeTrialDataSet(buf, offset, is2026); offset = r3.newOffset;
 
   return {
     header,

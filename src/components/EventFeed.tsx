@@ -52,10 +52,13 @@ export default function EventFeed() {
         return details.speedTrap
           ? `${getDriverName(details.speedTrap.vehicleIdx)} - ${details.speedTrap.speed?.toFixed(1)} km/h`
           : '';
-      case 'COLL':
-        return details.collision
-          ? `${getDriverName(details.collision.vehicle1Idx)} & ${getDriverName(details.collision.vehicle2Idx)}`
+      case 'COLL': {
+        if (!details.collision) return '';
+        const sevLabel = details.collision.severity !== undefined
+          ? [' · Low', ' · Medium', ' · High'][details.collision.severity] ?? ''
           : '';
+        return `${getDriverName(details.collision.vehicle1Idx)} & ${getDriverName(details.collision.vehicle2Idx)}${sevLabel}`;
+      }
       case 'SCAR':
         return details.safetyCar
           ? ['Deployed', 'Returning', 'Returned', 'Resume'][details.safetyCar.eventType] || ''

@@ -1,6 +1,25 @@
-// F1 25 UDP Specification Constants
+// F1 25/26 UDP Specification Constants
 
-export const MAX_CARS = 22;
+export const MAX_CARS = 22;  // F1 25 default
+export const MAX_CARS_2025 = 22;
+export const MAX_CARS_2026 = 24;
+export function isFormat2026(packetFormat: number, gameYear: number, bufLen = 0, expected2025Size = 0): boolean {
+  if (packetFormat === 2026 || gameYear === 26) return true;
+  if (bufLen > 0 && expected2025Size > 0) return bufLen !== expected2025Size;
+  return false;
+}
+export function maxCarsForFormat(packetFormat: number, gameYear = 0): number {
+  return isFormat2026(packetFormat, gameYear) ? MAX_CARS_2026 : MAX_CARS_2025;
+}
+
+export const BYTES_PER_CAR_MOTION_2025 = 60;
+export const BYTES_PER_CAR_MOTION_2026 = 54;
+export const BYTES_PER_CAR_PARTICIPANTS_2025 = 57;
+export const BYTES_PER_CAR_PARTICIPANTS_2026 = 60;
+export const BYTES_PER_CAR_TELEMETRY_2025 = 60;
+export const BYTES_PER_CAR_TELEMETRY_2026 = 59;
+export const BYTES_PER_CAR_STATUS_2025 = 55;
+export const BYTES_PER_CAR_STATUS_2026 = 59;
 export const MAX_PARTICIPANT_NAME_LEN = 32;
 export const MAX_TYRE_STINTS = 8;
 export const MAX_TYRE_SETS = 20; // 13 slick + 7 wet
@@ -29,6 +48,7 @@ export enum PacketId {
   MotionEx = 13,
   TimeTrial = 14,
   LapPositions = 15,
+  CarTelemetry2 = 16,
 }
 
 export const TRACK_NAMES: Record<number, string> = {
@@ -106,6 +126,7 @@ export const TRACK_FLAGS: Record<number, string> = {
 };
 
 export const TEAM_NAMES: Record<number, string> = {
+  // F1 25 standard team IDs
   0: 'Mercedes',
   1: 'Ferrari',
   2: 'Red Bull Racing',
@@ -116,7 +137,7 @@ export const TEAM_NAMES: Record<number, string> = {
   7: 'Haas',
   8: 'McLaren',
   9: 'Sauber',
-  // F1 25 My Team IDs (220-229 mirror the 10 standard teams)
+  // F1 25 My Team IDs (220-229)
   220: 'Mercedes',
   221: 'Ferrari',
   222: 'Red Bull Racing',
@@ -127,9 +148,32 @@ export const TEAM_NAMES: Record<number, string> = {
   227: 'Haas',
   228: 'McLaren',
   229: 'Sauber',
+  // F1 26 standard team IDs (0-9 + 256)
+  256: 'Mercedes',
+  257: 'Ferrari',
+  258: 'Red Bull Racing',
+  259: 'Williams',
+  260: 'Aston Martin',
+  261: 'Alpine',
+  262: 'RB',
+  263: 'Haas',
+  264: 'McLaren',
+  265: 'Audi',
+  // F1 26 My Team IDs (220-229 + 256)
+  476: 'Mercedes',
+  477: 'Ferrari',
+  478: 'Red Bull Racing',
+  479: 'Williams',
+  480: 'Aston Martin',
+  481: 'Alpine',
+  482: 'RB',
+  483: 'Haas',
+  484: 'McLaren',
+  485: 'Audi',
 };
 
 export const TEAM_COLORS: Record<number, string> = {
+  // F1 25 standard
   0: '#27F4D2', // Mercedes
   1: '#E80020', // Ferrari
   2: '#3671C6', // Red Bull Racing
@@ -140,7 +184,7 @@ export const TEAM_COLORS: Record<number, string> = {
   7: '#B6BABD', // Haas
   8: '#FF8000', // McLaren
   9: '#52E252', // Sauber
-  // F1 25 My Team IDs
+  // F1 25 My Team
   220: '#27F4D2', // Mercedes
   221: '#E80020', // Ferrari
   222: '#3671C6', // Red Bull Racing
@@ -151,6 +195,28 @@ export const TEAM_COLORS: Record<number, string> = {
   227: '#B6BABD', // Haas
   228: '#FF8000', // McLaren
   229: '#52E252', // Sauber
+  // F1 26 standard (256-265)
+  256: '#27F4D2', // Mercedes
+  257: '#E80020', // Ferrari
+  258: '#3671C6', // Red Bull Racing
+  259: '#64C4FF', // Williams
+  260: '#229971', // Aston Martin
+  261: '#0093CC', // Alpine
+  262: '#6692FF', // RB
+  263: '#B6BABD', // Haas
+  264: '#FF8000', // McLaren
+  265: '#C0C0C0', // Audi
+  // F1 26 My Team (476-485)
+  476: '#27F4D2', // Mercedes
+  477: '#E80020', // Ferrari
+  478: '#3671C6', // Red Bull Racing
+  479: '#64C4FF', // Williams
+  480: '#229971', // Aston Martin
+  481: '#0093CC', // Alpine
+  482: '#6692FF', // RB
+  483: '#B6BABD', // Haas
+  484: '#FF8000', // McLaren
+  485: '#C0C0C0', // Audi
 };
 
 export const SESSION_TYPES: Record<number, string> = {
@@ -204,7 +270,7 @@ export const ERS_DEPLOY_MODES: Record<number, string> = {
   0: 'None',
   1: 'Medium',
   2: 'Hotlap',
-  3: 'Overtake',
+  3: 'Boost',
 };
 
 export const DRIVER_STATUS: Record<number, string> = {

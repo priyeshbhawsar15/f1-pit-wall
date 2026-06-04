@@ -1,5 +1,5 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE } from '../../lib/constants';
+import { HEADER_SIZE, isFormat2026 } from '../../lib/constants';
 
 export interface EventDataDetails {
   fastestLap?: { vehicleIdx: number; lapTime: number };
@@ -22,7 +22,7 @@ export interface EventDataDetails {
   buttons?: { buttonStatus: number };
   overtake?: { overtakingVehicleIdx: number; beingOvertakenVehicleIdx: number };
   safetyCar?: { safetyCarType: number; eventType: number };
-  collision?: { vehicle1Idx: number; vehicle2Idx: number };
+  collision?: { vehicle1Idx: number; vehicle2Idx: number; severity?: number };
   drsDisabled?: { reason: number };
 }
 
@@ -117,6 +117,7 @@ export function parseEventData(buf: Buffer, header: PacketHeader): PacketEventDa
       eventDetails.collision = {
         vehicle1Idx: buf.readUInt8(offset),
         vehicle2Idx: buf.readUInt8(offset + 1),
+        ...(isFormat2026(header.packetFormat, header.gameYear) && { severity: buf.readUInt8(offset + 2) }),
       };
       break;
     case 'DRSD':

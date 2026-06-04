@@ -1,5 +1,5 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS, MAX_PARTICIPANT_NAME_LEN } from '../../lib/constants';
+import { HEADER_SIZE, MAX_CARS_2025, MAX_CARS_2026, isFormat2026, MAX_PARTICIPANT_NAME_LEN, BYTES_PER_CAR_PARTICIPANTS_2025, BYTES_PER_CAR_PARTICIPANTS_2026 } from '../../lib/constants';
 
 export interface ParticipantData {
   aiControlled: number;
@@ -26,15 +26,21 @@ export interface PacketParticipantsData {
 
 export function parseParticipantsData(buf: Buffer, header: PacketHeader): PacketParticipantsData {
   let offset = HEADER_SIZE;
+  const is2026 = isFormat2026(header.packetFormat, header.gameYear, buf.length, HEADER_SIZE + 1 + MAX_CARS_2025 * BYTES_PER_CAR_PARTICIPANTS_2025);
+  const bytesPerCar = is2026 ? BYTES_PER_CAR_PARTICIPANTS_2026 : BYTES_PER_CAR_PARTICIPANTS_2025;
+  const maxCars = Math.min(
+    Math.floor((buf.length - HEADER_SIZE - 1) / bytesPerCar),
+    is2026 ? MAX_CARS_2026 : MAX_CARS_2025,
+  );
 
   const numActiveCars = buf.readUInt8(offset); offset += 1;
 
   const participants: ParticipantData[] = [];
-  for (let i = 0; i < MAX_CARS; i++) {
+  for (let i = 0; i < maxCars; i++) {
     const aiControlled = buf.readUInt8(offset); offset += 1;
-    const driverId = buf.readUInt8(offset); offset += 1;
-    const networkId = buf.readUInt8(offset); offset += 1;
-    const teamId = buf.readUInt8(offset); offset += 1;
+    const driverId  = is2026 ? buf.readUInt16LE(offset) : buf.readUInt8(offset); offset += is2026 ? 2 : 1;
+    const networkId = is2026 ? buf.readUInt16LE(offset) : buf.readUInt8(offset); offset += is2026 ? 2 : 1;
+    const teamId    = is2026 ? buf.readUInt16LE(offset) : buf.readUInt8(offset); offset += is2026 ? 2 : 1;
     const myTeam = buf.readUInt8(offset); offset += 1;
     const raceNumber = buf.readUInt8(offset); offset += 1;
     const nationality = buf.readUInt8(offset); offset += 1;

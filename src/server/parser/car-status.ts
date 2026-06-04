@@ -1,5 +1,5 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS } from '../../lib/constants';
+import { HEADER_SIZE, MAX_CARS_2025, MAX_CARS_2026, isFormat2026, BYTES_PER_CAR_STATUS_2025, BYTES_PER_CAR_STATUS_2026 } from '../../lib/constants';
 
 export interface CarStatusData {
   tractionControl: number;
@@ -25,6 +25,7 @@ export interface CarStatusData {
   ersDeployMode: number;
   ersHarvestedThisLapMGUK: number;
   ersHarvestedThisLapMGUH: number;
+  ersHarvestLimitPerLap: number;
   ersDeployedThisLap: number;
   networkPaused: number;
 }
@@ -37,8 +38,14 @@ export interface PacketCarStatusData {
 export function parseCarStatusData(buf: Buffer, header: PacketHeader): PacketCarStatusData {
   const carStatusData: CarStatusData[] = [];
   let offset = HEADER_SIZE;
+  const is2026 = isFormat2026(header.packetFormat, header.gameYear, buf.length, HEADER_SIZE + MAX_CARS_2025 * BYTES_PER_CAR_STATUS_2025);
+  const bytesPerCar = is2026 ? BYTES_PER_CAR_STATUS_2026 : BYTES_PER_CAR_STATUS_2025;
+  const maxCars = Math.min(
+    Math.floor((buf.length - HEADER_SIZE) / bytesPerCar),
+    is2026 ? MAX_CARS_2026 : MAX_CARS_2025,
+  );
 
-  for (let i = 0; i < MAX_CARS; i++) {
+  for (let i = 0; i < maxCars; i++) {
     const tractionControl = buf.readUInt8(offset); offset += 1;
     const antiLockBrakes = buf.readUInt8(offset); offset += 1;
     const fuelMix = buf.readUInt8(offset); offset += 1;
@@ -62,6 +69,8 @@ export function parseCarStatusData(buf: Buffer, header: PacketHeader): PacketCar
     const ersDeployMode = buf.readUInt8(offset); offset += 1;
     const ersHarvestedThisLapMGUK = buf.readFloatLE(offset); offset += 4;
     const ersHarvestedThisLapMGUH = buf.readFloatLE(offset); offset += 4;
+    let ersHarvestLimitPerLap = 0;
+    if (is2026) { ersHarvestLimitPerLap = buf.readFloatLE(offset); offset += 4; }
     const ersDeployedThisLap = buf.readFloatLE(offset); offset += 4;
     const networkPaused = buf.readUInt8(offset); offset += 1;
 
@@ -72,7 +81,7 @@ export function parseCarStatusData(buf: Buffer, header: PacketHeader): PacketCar
       actualTyreCompound, visualTyreCompound, tyresAgeLaps,
       vehicleFIAFlags, enginePowerICE, enginePowerMGUK,
       ersStoreEnergy, ersDeployMode, ersHarvestedThisLapMGUK,
-      ersHarvestedThisLapMGUH, ersDeployedThisLap, networkPaused,
+      ersHarvestedThisLapMGUH, ersHarvestLimitPerLap, ersDeployedThisLap, networkPaused,
     });
   }
 

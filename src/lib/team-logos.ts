@@ -1,5 +1,6 @@
 // Team logo URLs from official/public sources
 export const TEAM_LOGOS: Record<number, string> = {
+  // F1 25 standard (0-9)
   0: 'https://media.formula1.com/content/dam/fom-website/teams/2025/mercedes-logo.png',
   1: 'https://media.formula1.com/content/dam/fom-website/teams/2025/ferrari-logo.png',
   2: 'https://media.formula1.com/content/dam/fom-website/teams/2025/red-bull-racing-logo.png',
@@ -10,6 +11,39 @@ export const TEAM_LOGOS: Record<number, string> = {
   7: 'https://media.formula1.com/content/dam/fom-website/teams/2025/haas-logo.png',
   8: 'https://media.formula1.com/content/dam/fom-website/teams/2025/mclaren-logo.png',
   9: 'https://media.formula1.com/content/dam/fom-website/teams/2025/kick-sauber-logo.png',
+  // F1 25 My Team (220-229) - same logos
+  220: 'https://media.formula1.com/content/dam/fom-website/teams/2025/mercedes-logo.png',
+  221: 'https://media.formula1.com/content/dam/fom-website/teams/2025/ferrari-logo.png',
+  222: 'https://media.formula1.com/content/dam/fom-website/teams/2025/red-bull-racing-logo.png',
+  223: 'https://media.formula1.com/content/dam/fom-website/teams/2025/williams-logo.png',
+  224: 'https://media.formula1.com/content/dam/fom-website/teams/2025/aston-martin-logo.png',
+  225: 'https://media.formula1.com/content/dam/fom-website/teams/2025/alpine-logo.png',
+  226: 'https://media.formula1.com/content/dam/fom-website/teams/2025/rb-logo.png',
+  227: 'https://media.formula1.com/content/dam/fom-website/teams/2025/haas-logo.png',
+  228: 'https://media.formula1.com/content/dam/fom-website/teams/2025/mclaren-logo.png',
+  229: 'https://media.formula1.com/content/dam/fom-website/teams/2025/kick-sauber-logo.png',
+  // F1 26 standard (256-265)
+  256: 'https://media.formula1.com/content/dam/fom-website/teams/2025/mercedes-logo.png',
+  257: 'https://media.formula1.com/content/dam/fom-website/teams/2025/ferrari-logo.png',
+  258: 'https://media.formula1.com/content/dam/fom-website/teams/2025/red-bull-racing-logo.png',
+  259: 'https://media.formula1.com/content/dam/fom-website/teams/2025/williams-logo.png',
+  260: 'https://media.formula1.com/content/dam/fom-website/teams/2025/aston-martin-logo.png',
+  261: 'https://media.formula1.com/content/dam/fom-website/teams/2025/alpine-logo.png',
+  262: 'https://media.formula1.com/content/dam/fom-website/teams/2025/rb-logo.png',
+  263: 'https://media.formula1.com/content/dam/fom-website/teams/2025/haas-logo.png',
+  264: 'https://media.formula1.com/content/dam/fom-website/teams/2025/mclaren-logo.png',
+  265: 'https://media.formula1.com/content/dam/fom-website/teams/2026/audi-logo.png',
+  // F1 26 My Team (476-485)
+  476: 'https://media.formula1.com/content/dam/fom-website/teams/2025/mercedes-logo.png',
+  477: 'https://media.formula1.com/content/dam/fom-website/teams/2025/ferrari-logo.png',
+  478: 'https://media.formula1.com/content/dam/fom-website/teams/2025/red-bull-racing-logo.png',
+  479: 'https://media.formula1.com/content/dam/fom-website/teams/2025/williams-logo.png',
+  480: 'https://media.formula1.com/content/dam/fom-website/teams/2025/aston-martin-logo.png',
+  481: 'https://media.formula1.com/content/dam/fom-website/teams/2025/alpine-logo.png',
+  482: 'https://media.formula1.com/content/dam/fom-website/teams/2025/rb-logo.png',
+  483: 'https://media.formula1.com/content/dam/fom-website/teams/2025/haas-logo.png',
+  484: 'https://media.formula1.com/content/dam/fom-website/teams/2025/mclaren-logo.png',
+  485: 'https://media.formula1.com/content/dam/fom-website/teams/2026/audi-logo.png',
 };
 
 // Tyre compound SVG icons (inline data URIs for reliability)

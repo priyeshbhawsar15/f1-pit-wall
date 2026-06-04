@@ -8,12 +8,18 @@ export default function TelemetryPanel() {
   const selectedCarIndex = useTelemetryStore((s) => s.selectedCarIndex);
   const telemetry = useTelemetryStore((s) => s.telemetry);
   const drivers = useTelemetryStore((s) => s.drivers);
+  const session = useTelemetryStore((s) => s.session);
+  const carTelemetry2 = useTelemetryStore((s) => s.carTelemetry2);
+
+  const is2026 = session?.formula === 13;
 
   if (selectedCarIndex === null) return null;
 
   const car = telemetry.find((t) => t.i === selectedCarIndex);
   const driver = drivers.find((d) => d.i === selectedCarIndex);
   const teamColor = driver ? (TEAM_COLORS[driver.team] || '#555') : '#555';
+
+  const aero = selectedCarIndex !== null ? carTelemetry2.find((t) => t.i === selectedCarIndex) : null;
 
   const gearLabel = car
     ? car.gear === -1 ? 'R' : car.gear === 0 ? 'N' : String(car.gear)
@@ -61,19 +67,56 @@ export default function TelemetryPanel() {
             <span className="text-[10px] text-[var(--muted)] uppercase tracking-[1.5px] mt-1"
                   style={{ fontFamily: "var(--font-ui)" }}>GEAR</span>
           </div>
-          <motion.div
-            className="pb-1"
-            animate={{ opacity: car?.drs ? 1 : 0.25, scale: car?.drs ? 1 : 0.95 }}
-            transition={{ duration: 0.15 }}
-          >
-            <span className={`text-[11px] font-bold px-3 py-1.5 uppercase tracking-[2px] ${
-              car?.drs
-                ? 'bg-[var(--success)] text-black'
-                : 'bg-[var(--surface-elevated)] text-[var(--muted)]'
-            }`} style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}>
-              DRS
-            </span>
-          </motion.div>
+          {!is2026 ? (
+            <motion.div
+              className="pb-1"
+              animate={{ opacity: car?.drs ? 1 : 0.25, scale: car?.drs ? 1 : 0.95 }}
+              transition={{ duration: 0.15 }}
+            >
+              <span className={`text-[11px] font-bold px-3 py-1.5 uppercase tracking-[2px] ${
+                car?.drs
+                  ? 'bg-[var(--success)] text-black'
+                  : 'bg-[var(--surface-elevated)] text-[var(--muted)]'
+              }`} style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}>
+                DRS
+              </span>
+            </motion.div>
+          ) : (
+            <div className="flex flex-col gap-1 pb-1">
+              {/* Active Aero badge */}
+              <motion.span
+                animate={{
+                  opacity: aero?.aeroAvail ? 1 : 0.3,
+                }}
+                transition={{ duration: 0.15 }}
+                className={`text-[10px] font-bold px-2 py-1 uppercase tracking-[1.5px] ${
+                  aero?.aeroAvail && aero?.aeroMode === 1
+                    ? 'bg-[var(--success)] text-black'
+                    : aero?.aeroAvail
+                    ? 'bg-[var(--m-blue-dark)]/30 text-[var(--m-blue-dark)]'
+                    : 'bg-[var(--surface-elevated)] text-[var(--muted)]'
+                }`}
+                style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}
+              >
+                AA {aero?.aeroMode === 1 ? 'STR' : 'CRN'}
+              </motion.span>
+              {/* Overtake mode badge */}
+              <motion.span
+                animate={{ opacity: aero?.otAvail ? 1 : 0.3 }}
+                transition={{ duration: 0.15 }}
+                className={`text-[10px] font-bold px-2 py-1 uppercase tracking-[1.5px] ${
+                  aero?.otActive
+                    ? 'bg-[var(--warning)] text-black'
+                    : aero?.otAvail
+                    ? 'bg-[var(--warning)]/20 text-[var(--warning)]'
+                    : 'bg-[var(--surface-elevated)] text-[var(--muted)]'
+                }`}
+                style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}
+              >
+                {aero?.otActive ? 'OT ON' : aero?.otAvail ? 'OT RDY' : `OT ${aero?.otDist ?? '--'}m`}
+              </motion.span>
+            </div>
+          )}
           <div className="flex flex-col items-end ml-auto pb-0.5">
             <span className="text-[18px] font-mono font-bold tabular-nums">{car?.rpm ?? '---'}</span>
             <span className="text-[10px] text-[var(--muted)] uppercase tracking-[1.5px] mt-1"

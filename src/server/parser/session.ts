@@ -1,5 +1,5 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_MARSHAL_ZONES, MAX_WEATHER_FORECAST_SAMPLES, MAX_SESSIONS_IN_WEEKEND } from '../../lib/constants';
+import { HEADER_SIZE, MAX_MARSHAL_ZONES, MAX_WEATHER_FORECAST_SAMPLES, MAX_SESSIONS_IN_WEEKEND, isFormat2026 } from '../../lib/constants';
 
 export interface MarshalZone {
   zoneStart: number;
@@ -15,6 +15,11 @@ export interface WeatherForecastSample {
   airTemperature: number;
   airTemperatureChange: number;
   rainPercentage: number;
+}
+
+export interface AeroZone {
+  zoneStart: number;
+  zoneEnd: number;
 }
 
 export interface PacketSessionData {
@@ -53,6 +58,15 @@ export interface PacketSessionData {
   weekendStructure: number[];
   sector2LapDistanceStart: number;
   sector3LapDistanceStart: number;
+  // 2026-only fields
+  activeAeroTrackStatus?: number;
+  numActiveAeroZonesFull?: number;
+  activeAeroZonesFull?: AeroZone[];
+  numActiveAeroZonesPartial?: number;
+  activeAeroZonesPartial?: AeroZone[];
+  numDrsZones?: number;
+  drsZones?: AeroZone[];
+  startReactionTime?: number;
 }
 
 export function parseSessionData(buf: Buffer, header: PacketHeader): PacketSessionData {
@@ -131,7 +145,7 @@ export function parseSessionData(buf: Buffer, header: PacketHeader): PacketSessi
   const sector2LapDistanceStart = buf.readFloatLE(offset); offset += 4;
   const sector3LapDistanceStart = buf.readFloatLE(offset); offset += 4;
 
-  return {
+  const base = {
     header, weather, trackTemperature, airTemperature, totalLaps, trackLength,
     sessionType, trackId, formula, sessionTimeLeft, sessionDuration,
     pitSpeedLimit, gamePaused, isSpectating, spectatorCarIndex,
@@ -141,5 +155,48 @@ export function parseSessionData(buf: Buffer, header: PacketHeader): PacketSessi
     sessionLinkIdentifier, pitStopWindowIdealLap, pitStopWindowLatestLap,
     pitStopRejoinPosition, safetyCarExperience, numSessionsInWeekend,
     weekendStructure, sector2LapDistanceStart, sector3LapDistanceStart,
+  };
+
+  if (!isFormat2026(header.packetFormat, header.gameYear)) return base;
+
+  // 2026-only tail fields
+  const activeAeroTrackStatus = buf.readUInt8(offset); offset += 1;
+
+  const numActiveAeroZonesFull = buf.readUInt8(offset); offset += 1;
+  const activeAeroZonesFull: AeroZone[] = [];
+  for (let i = 0; i < 8; i++) {
+    const zoneStart = buf.readFloatLE(offset); offset += 4;
+    const zoneEnd   = buf.readFloatLE(offset); offset += 4;
+    activeAeroZonesFull.push({ zoneStart, zoneEnd });
+  }
+
+  const numActiveAeroZonesPartial = buf.readUInt8(offset); offset += 1;
+  const activeAeroZonesPartial: AeroZone[] = [];
+  for (let i = 0; i < 8; i++) {
+    const zoneStart = buf.readFloatLE(offset); offset += 4;
+    const zoneEnd   = buf.readFloatLE(offset); offset += 4;
+    activeAeroZonesPartial.push({ zoneStart, zoneEnd });
+  }
+
+  const numDrsZones = buf.readUInt8(offset); offset += 1;
+  const drsZones: AeroZone[] = [];
+  for (let i = 0; i < 4; i++) {
+    const zoneStart = buf.readFloatLE(offset); offset += 4;
+    const zoneEnd   = buf.readFloatLE(offset); offset += 4;
+    drsZones.push({ zoneStart, zoneEnd });
+  }
+
+  const startReactionTime = buf.readFloatLE(offset); offset += 4;
+  // 5 new uint8 assist flags (antiLockBrakesAssist, tractionControlAssist,
+  // dynamicRacingLineHiVis, dynamicRacingLineColourBlind, recurringRewindPrompt)
+  offset += 5;
+
+  return {
+    ...base,
+    activeAeroTrackStatus,
+    numActiveAeroZonesFull, activeAeroZonesFull,
+    numActiveAeroZonesPartial, activeAeroZonesPartial,
+    numDrsZones, drsZones,
+    startReactionTime,
   };
 }
