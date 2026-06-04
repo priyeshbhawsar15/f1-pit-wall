@@ -9,6 +9,7 @@ import { PacketParticipantsData } from '../parser/participants';
 import { PacketEventData } from '../parser/event';
 import { PacketFinalClassificationData } from '../parser/final-classification';
 
+
 export async function writeMotionSamples(packet: PacketMotionData): Promise<void> {
   const now = new Date();
   const sessionUID = BigInt.asIntN(64, packet.header.sessionUID).toString();
@@ -200,14 +201,15 @@ export async function writeEvent(packet: PacketEventData): Promise<boolean> {
   const sessionTimeMs = Number.isFinite(packet.header.sessionTime)
     ? Math.max(0, Math.round(packet.header.sessionTime * 1000))
     : null;
-  const details = JSON.stringify(packet.eventDetails ?? null);
 
-  await prisma.$executeRaw(
-    Prisma.sql`
-      INSERT INTO events ("sessionId", "eventCode", timestamp, "sessionTimeMs", details)
-      VALUES (${session.id}, ${packet.eventStringCode}, ${new Date()}, ${sessionTimeMs}, CAST(${details} AS JSONB))
-    `
-  );
+  await prisma.event.create({
+    data: {
+      sessionId: session.id,
+      eventCode: packet.eventStringCode,
+      sessionTimeMs,
+      details: packet.eventDetails as any,
+    },
+  });
 
   return true;
 }

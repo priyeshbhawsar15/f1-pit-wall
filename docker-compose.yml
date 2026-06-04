@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   timescaledb:
     image: timescale/timescaledb:latest-pg16
@@ -14,6 +12,8 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./prisma/migrations/init/migration.sql:/docker-entrypoint-initdb.d/01-hypertables.sql
       - ./prisma/migrations/002_profiles_seasons/migration.sql:/docker-entrypoint-initdb.d/02-profiles-seasons.sql
+      - ./prisma/migrations/003_selective_persistence_e2c6e9/migration.sql:/docker-entrypoint-initdb.d/03-selective-persistence.sql
+      - ./prisma/migrations/004_event_session_time_ms/migration.sql:/docker-entrypoint-initdb.d/04-event-session-time.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s

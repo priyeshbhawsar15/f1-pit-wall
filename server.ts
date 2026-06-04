@@ -2,6 +2,7 @@ import { createServer } from 'http';
 import next from 'next';
 import { initSocketIO } from './src/server/realtime/socket';
 import { startUDPListener } from './src/server/udp-listener';
+import { prisma } from './src/lib/db';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
@@ -10,7 +11,17 @@ const port = parseInt(process.env.PORT || '3333', 10);
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
+async function ensureEventSessionTimeMsColumn(): Promise<void> {
+  try {
+    await prisma.$executeRawUnsafe('ALTER TABLE IF EXISTS events ADD COLUMN IF NOT EXISTS "sessionTimeMs" INTEGER');
+  } catch (error: any) {
+    console.warn('[DB] Could not ensure events.sessionTimeMs column:', error.message);
+  }
+}
+
+app.prepare().then(async () => {
+  await ensureEventSessionTimeMsColumn();
+
   const httpServer = createServer((req, res) => {
     handle(req, res);
   });

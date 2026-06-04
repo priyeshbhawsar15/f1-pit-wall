@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const [rawEvents, session] = await Promise.all([
+    const [events, session] = await Promise.all([
       prisma.event.findMany({
         where: { sessionId: params.id },
         orderBy: { timestamp: 'asc' },
@@ -11,6 +11,7 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
           id: true,
           eventCode: true,
           timestamp: true,
+          sessionTimeMs: true,
           details: true,
         },
       }),
@@ -19,11 +20,6 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
         include: { participants: { include: { humanProfile: true } } },
       }),
     ]);
-
-    const events = rawEvents.map((event) => ({
-      ...event,
-      sessionTimeMs: null,
-    }));
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });

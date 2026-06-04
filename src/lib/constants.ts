@@ -116,6 +116,17 @@ export const TEAM_NAMES: Record<number, string> = {
   7: 'Haas',
   8: 'McLaren',
   9: 'Sauber',
+  // F1 25 My Team IDs (220-229 mirror the 10 standard teams)
+  220: 'Mercedes',
+  221: 'Ferrari',
+  222: 'Red Bull Racing',
+  223: 'Williams',
+  224: 'Aston Martin',
+  225: 'Alpine',
+  226: 'RB',
+  227: 'Haas',
+  228: 'McLaren',
+  229: 'Sauber',
 };
 
 export const TEAM_COLORS: Record<number, string> = {
@@ -129,6 +140,17 @@ export const TEAM_COLORS: Record<number, string> = {
   7: '#B6BABD', // Haas
   8: '#FF8000', // McLaren
   9: '#52E252', // Sauber
+  // F1 25 My Team IDs
+  220: '#27F4D2', // Mercedes
+  221: '#E80020', // Ferrari
+  222: '#3671C6', // Red Bull Racing
+  223: '#64C4FF', // Williams
+  224: '#229971', // Aston Martin
+  225: '#0093CC', // Alpine
+  226: '#6692FF', // RB
+  227: '#B6BABD', // Haas
+  228: '#FF8000', // McLaren
+  229: '#52E252', // Sauber
 };
 
 export const SESSION_TYPES: Record<number, string> = {
@@ -239,6 +261,17 @@ export const TEAM_LOGOS: Record<number, string> = {
   7: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Haas_F1_Team_logo.svg',
   8: 'https://upload.wikimedia.org/wikipedia/commons/3/30/McLaren_Racing_logo.png',
   9: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/Stake_F1_Team_Kick_Sauber_logo.svg',
+  // F1 25 My Team IDs
+  220: 'https://upload.wikimedia.org/wikipedia/commons/f/fb/Mercedes-AMG_Petronas_F1_Team_Logo.svg',
+  221: 'https://upload.wikimedia.org/wikipedia/en/3/36/Scuderia_Ferrari_HP_logo_24.svg',
+  222: 'https://upload.wikimedia.org/wikipedia/en/e/ea/Oracle_Red_Bull_Racing_logo.svg',
+  223: 'https://upload.wikimedia.org/wikipedia/commons/a/a9/Williams_Racing_2020_logo.svg',
+  224: 'https://upload.wikimedia.org/wikipedia/commons/4/41/Aston_Martin_Aramco_Cognizant_F1_Team_logo.svg',
+  225: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Alpine_F1_Team_Logo.svg',
+  226: 'https://upload.wikimedia.org/wikipedia/en/e/ee/Visa_Cash_App_RB_F1_Team_logo.svg',
+  227: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Haas_F1_Team_logo.svg',
+  228: 'https://upload.wikimedia.org/wikipedia/commons/3/30/McLaren_Racing_logo.png',
+  229: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/Stake_F1_Team_Kick_Sauber_logo.svg',
 };
 
 export const DRIVER_FLAGS: Record<string, string> = {
