@@ -17,7 +17,7 @@ export default function HumanPlayersOverview() {
   const session = useTelemetryStore((s) => s.session);
   const selectedCarIndex = useTelemetryStore((s) => s.selectedCarIndex);
 
-  const is2026 = session?.formula === 13;
+  const is2026 = session?.is2026 === true;
 
   const selectedDriver = selectedCarIndex !== null
     ? drivers.find((driver) => driver.i === selectedCarIndex)
@@ -31,7 +31,8 @@ export default function HumanPlayersOverview() {
         const status = carStatus.find((entry) => entry.i === driver.i);
         const aero = carTelemetry2.find((entry) => entry.i === driver.i);
         const tyreInfo = status ? VISUAL_TYRE_COMPOUNDS[status.tyre] : null;
-        const ersPct = status ? Math.min((status.ersStore / MAX_ERS_STORE) * 100, 100) : null;
+        const restricted = driver.tel === 0;
+        const ersPct = (!restricted && status) ? Math.min((status.ersStore / MAX_ERS_STORE) * 100, 100) : null;
         const raceState = lap?.pit
           ? 'PIT'
           : lap && lap.penalties > 0
@@ -46,6 +47,7 @@ export default function HumanPlayersOverview() {
           tyreInfo,
           ersPct,
           raceState,
+          restricted,
         };
       })
       .sort((a, b) => {
@@ -78,7 +80,7 @@ export default function HumanPlayersOverview() {
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
-            {humanPlayers.map(({ driver, lap, status, aero, tyreInfo, ersPct, raceState }, index) => {
+            {humanPlayers.map(({ driver, lap, status, aero, tyreInfo, ersPct, raceState, restricted }, index) => {
               const isSelected = driver.i === selectedCarIndex;
               const teamColor = TEAM_COLORS[driver.team] || '#666';
               const gapValue = !lap
@@ -154,12 +156,12 @@ export default function HumanPlayersOverview() {
                           accent: aero?.aeroAvail && aero.aeroMode === 1 ? 'var(--success)' : undefined,
                         },
                       ] : [
-                        { label: 'ERS', value: ersPct !== null ? `${Math.round(ersPct)}%` : '---' },
-                        { label: 'Fuel', value: status ? `${status.fuelLaps.toFixed(1)} LAPS` : '---' },
+                        { label: 'ERS', value: restricted ? 'RESTRICTED' : ersPct !== null ? `${Math.round(ersPct)}%` : '---' },
+                        { label: 'Fuel', value: restricted ? 'RESTRICTED' : status ? `${status.fuelLaps.toFixed(1)} LAPS` : '---' },
                       ]),
                       ...(!is2026 ? [] : [
-                        { label: 'ERS', value: ersPct !== null ? `${Math.round(ersPct)}%` : '---' },
-                        { label: 'Fuel', value: status ? `${status.fuelLaps.toFixed(1)} LAPS` : '---' },
+                        { label: 'ERS', value: restricted ? 'RESTRICTED' : ersPct !== null ? `${Math.round(ersPct)}%` : '---' },
+                        { label: 'Fuel', value: restricted ? 'RESTRICTED' : status ? `${status.fuelLaps.toFixed(1)} LAPS` : '---' },
                       ]),
                       { label: 'Penalties', value: lap ? `${lap.penalties}s` : '0s', accent: lap && lap.penalties > 0 ? 'var(--warning)' : undefined },
                       { label: 'State', value: raceState, accent: raceState === 'PIT' ? 'var(--warning)' : raceState.includes('PEN') ? 'var(--m-red)' : 'var(--success)' },

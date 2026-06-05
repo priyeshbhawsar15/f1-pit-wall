@@ -11,7 +11,7 @@ export default function TelemetryPanel() {
   const session = useTelemetryStore((s) => s.session);
   const carTelemetry2 = useTelemetryStore((s) => s.carTelemetry2);
 
-  const is2026 = session?.formula === 13;
+  const is2026 = session?.is2026 === true;
 
   if (selectedCarIndex === null) return null;
 

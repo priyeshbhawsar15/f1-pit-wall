@@ -93,6 +93,7 @@ export interface DriverInfo {
   num: number;
   ai: number;
   nat: number;
+  tel: number;
 }
 
 export interface SessionInfo {
@@ -108,6 +109,7 @@ export interface SessionInfo {
   sessionDuration: number;
   safetyCarStatus: number;
   formula: number;
+  is2026: boolean;
   pitStopWindowIdealLap: number;
   pitStopWindowLatestLap: number;
   sector2LapDistanceStart: number;

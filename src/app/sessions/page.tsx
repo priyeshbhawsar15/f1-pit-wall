@@ -60,7 +60,12 @@ export default function SessionsPage() {
     }
     setDeletingId(sessionId);
     try {
-      await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert(`Delete failed: ${body.error ?? res.status}`);
+        return;
+      }
       setSessions((prev) => prev.filter((session) => session.id !== sessionId));
     } finally {
       setDeletingId(null);

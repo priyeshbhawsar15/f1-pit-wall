@@ -161,6 +161,7 @@ export function startUDPListener(): dgram.Socket {
             sessionDuration: packet.sessionDuration,
             safetyCarStatus: packet.safetyCarStatus,
             formula: packet.formula,
+            is2026: isFormat2026(header.packetFormat, header.gameYear),
             pitStopWindowIdealLap: packet.pitStopWindowIdealLap,
             pitStopWindowLatestLap: packet.pitStopWindowLatestLap,
             sector2LapDistanceStart: packet.sector2LapDistanceStart,
@@ -238,6 +239,7 @@ export function startUDPListener(): dgram.Socket {
             num: p.raceNumber,
             ai: p.aiControlled,
             nat: p.nationality,
+            tel: p.yourTelemetry,
           }));
           publish(RedisChannel.Participants, {
             sessionUID,
