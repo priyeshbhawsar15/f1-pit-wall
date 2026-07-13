@@ -28,7 +28,7 @@ Players are sorted by race position (ascending). The list is capped at 2 (`slice
 | `drivers` | Filter for humans (`ai === 0`), name, team, `tel` flag |
 | `lapData` | Position, lap number, last lap, gap, pit flag, penalties |
 | `carStatus` | Tyre compound/age, ERS store, fuel, fuel laps |
-| `carTelemetry2` | 2026 Active Aero mode + Overtake system availability |
+| `carTelemetry2` | 2026 Active Aero mode + Overtake system availability; aero mode remains valid when activation availability is `0` |
 | `session` | `is2026` flag to branch 2026-specific stat rows |
 | `selectedCarIndex` | Shows SELECTED badge on the matching card |
 

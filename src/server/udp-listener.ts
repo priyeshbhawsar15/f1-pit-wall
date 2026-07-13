@@ -16,7 +16,14 @@ import { parseMotionExData } from './parser/motion-ex';
 import { parseTimeTrialData } from './parser/time-trial';
 import { parseLapPositionsData } from './parser/lap-positions';
 import { parseCarTelemetry2Data } from './parser/car-telemetry2';
-import { PacketId, DEFAULT_UDP_PORT, MAX_CARS, maxCarsForFormat, isFormat2026, HEADER_SIZE, MAX_CARS_2025, MAX_CARS_2026, BYTES_PER_CAR_MOTION_2025 } from '../lib/constants';
+import { PacketId, DEFAULT_UDP_PORT } from '../lib/constants';
+import {
+  getCarCount,
+  getExpectedPacketSize,
+  hasValidPacketSize,
+  resolveTelemetryFormat,
+  TelemetryFormat,
+} from './parser/format';
 import { publish, RedisChannel } from './realtime/redis';
 import {
   writeMotionSamples,
@@ -34,10 +41,12 @@ let telemetryThrottleCounter = 0;
 let lapDataThrottleCounter = 0;
 let statusThrottleCounter = 0;
 let damageThrottleCounter = 0;
-let formatLoggedForSession = '';
 
 const humanCarIndicesBySession = new Map<string, Set<number>>();
 const pendingEventsBySession = new Map<string, PacketEventData[]>();
+const telemetryFormatBySession = new Map<string, TelemetryFormat>();
+const formatLoggedForSession = new Set<string>();
+const warnedPacketIssues = new Set<string>();
 
 const DB_WRITE_INTERVAL = 5;
 const REALTIME_THROTTLE = 2;
@@ -51,22 +60,37 @@ function getOrCreateHumanCarIndices(sessionUID: string): Set<number> {
   return indices;
 }
 
-function rememberHumanCarIndicesFromHeader(sessionUID: string, header: PacketHeader): Set<number> {
-  const indices = getOrCreateHumanCarIndices(sessionUID);
+function warnPacketOnce(key: string, message: string): void {
+  if (warnedPacketIssues.has(key)) return;
+  warnedPacketIssues.add(key);
+  console.warn(message);
+}
 
-  if (header.playerCarIndex >= 0 && header.playerCarIndex < MAX_CARS) {
+function rememberHumanCarIndicesFromHeader(
+  sessionUID: string,
+  header: PacketHeader,
+  format: TelemetryFormat,
+): Set<number> {
+  const indices = getOrCreateHumanCarIndices(sessionUID);
+  const maxCars = getCarCount(format);
+
+  if (header.playerCarIndex >= 0 && header.playerCarIndex < maxCars) {
     indices.add(header.playerCarIndex);
   }
 
-  if (header.secondaryPlayerCarIndex >= 0 && header.secondaryPlayerCarIndex < MAX_CARS) {
+  if (header.secondaryPlayerCarIndex >= 0 && header.secondaryPlayerCarIndex < maxCars) {
     indices.add(header.secondaryPlayerCarIndex);
   }
 
   return indices;
 }
 
-function rememberHumanCarIndicesFromParticipants(sessionUID: string, packet: PacketParticipantsData): Set<number> {
-  const indices = rememberHumanCarIndicesFromHeader(sessionUID, packet.header);
+function rememberHumanCarIndicesFromParticipants(
+  sessionUID: string,
+  packet: PacketParticipantsData,
+  format: TelemetryFormat,
+): Set<number> {
+  const indices = rememberHumanCarIndicesFromHeader(sessionUID, packet.header, format);
 
   for (let i = 0; i < packet.numActiveCars; i++) {
     if (packet.participants[i]?.aiControlled === 0) {
@@ -120,16 +144,41 @@ export function startUDPListener(): dgram.Socket {
       if (msg.length < 29) return;
       const header = parseHeader(msg);
       const sessionUID = header.sessionUID.toString();
+      const format = resolveTelemetryFormat(
+        header,
+        msg.length,
+        telemetryFormatBySession.get(sessionUID),
+      );
+
+      if (!format) {
+        warnPacketOnce(
+          `unsupported:${header.packetId}:${msg.length}`,
+          `[UDP] Unsupported packet id=${header.packetId} length=${msg.length}`,
+        );
+        return;
+      }
+
+      if (!hasValidPacketSize(header.packetId, format, msg.length)) {
+        const expected = getExpectedPacketSize(header.packetId, format);
+        warnPacketOnce(
+          `size:${header.packetId}:${format}:${msg.length}`,
+          `[UDP] Invalid ${format} packet id=${header.packetId} length=${msg.length}; expected=${expected ?? 'unsupported'}`,
+        );
+        return;
+      }
+
+      telemetryFormatBySession.set(sessionUID, format);
+      if (!formatLoggedForSession.has(sessionUID)) {
+        formatLoggedForSession.add(sessionUID);
+        console.log(
+          `[UDP] Session ${sessionUID} packetFormat=${header.packetFormat} gameYear=${header.gameYear} ` +
+          `resolved=${format} cars=${getCarCount(format)}`,
+        );
+      }
 
       switch (header.packetId) {
         case PacketId.Motion: {
-          if (formatLoggedForSession !== sessionUID) {
-            formatLoggedForSession = sessionUID;
-            const expected2025Motion = HEADER_SIZE + MAX_CARS_2025 * BYTES_PER_CAR_MOTION_2025;
-            const fmt26 = isFormat2026(header.packetFormat, header.gameYear, msg.length, expected2025Motion);
-            console.log(`[UDP] Session ${sessionUID} — packetFormat=${header.packetFormat} gameYear=${header.gameYear} bufLen=${msg.length} → treating as ${fmt26 ? '2026' : '2025'} (${fmt26 ? MAX_CARS_2026 : MAX_CARS_2025} cars)`);
-          }
-          const packet = parseMotionData(msg, header);
+          const packet = parseMotionData(msg, header, format);
           motionThrottleCounter++;
           if (motionThrottleCounter % REALTIME_THROTTLE === 0) {
             const slim = packet.carMotionData.map((m, idx) => ({
@@ -147,7 +196,7 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.Session: {
-          const packet = parseSessionData(msg, header);
+          const packet = parseSessionData(msg, header, format);
           publish(RedisChannel.Session, {
             sessionUID,
             trackId: packet.trackId,
@@ -161,7 +210,7 @@ export function startUDPListener(): dgram.Socket {
             sessionDuration: packet.sessionDuration,
             safetyCarStatus: packet.safetyCarStatus,
             formula: packet.formula,
-            is2026: isFormat2026(header.packetFormat, header.gameYear),
+            is2026: format === 2026,
             pitStopWindowIdealLap: packet.pitStopWindowIdealLap,
             pitStopWindowLatestLap: packet.pitStopWindowLatestLap,
             sector2LapDistanceStart: packet.sector2LapDistanceStart,
@@ -175,7 +224,7 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.LapData: {
-          const packet = parseLapData(msg, header);
+          const packet = parseLapData(msg, header, format);
           lapDataThrottleCounter++;
           if (lapDataThrottleCounter % REALTIME_THROTTLE === 0) {
             const slim = packet.lapData.map((l, idx) => ({
@@ -206,7 +255,7 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.Event: {
-          const packet = parseEventData(msg, header);
+          const packet = parseEventData(msg, header, format);
           if (packet.eventStringCode !== 'BUTN') {
             publish(RedisChannel.Event, {
               sessionUID,
@@ -221,17 +270,17 @@ export function startUDPListener(): dgram.Socket {
               })
               .catch((e) => console.error('[DB] Event write error:', e.message));
           }
+          if (packet.eventStringCode === 'SEND') {
+            telemetryFormatBySession.delete(sessionUID);
+            humanCarIndicesBySession.delete(sessionUID);
+            formatLoggedForSession.delete(sessionUID);
+          }
           break;
         }
 
         case PacketId.Participants: {
-          const packet = parseParticipantsData(msg, header);
-          if (formatLoggedForSession === sessionUID) {
-            const teams = packet.participants.slice(0, Math.min(5, packet.numActiveCars)).map((p) => p.teamId);
-            console.log(`[UDP] Participants bufLen=${msg.length} numActive=${packet.numActiveCars} first5teams=${JSON.stringify(teams)}`);
-            formatLoggedForSession = '';
-          }
-          rememberHumanCarIndicesFromParticipants(sessionUID, packet);
+          const packet = parseParticipantsData(msg, header, format);
+          rememberHumanCarIndicesFromParticipants(sessionUID, packet, format);
           const slim = packet.participants.slice(0, packet.numActiveCars).map((p, idx) => ({
             i: idx,
             name: p.name,
@@ -251,8 +300,8 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.CarTelemetry: {
-          const packet = parseCarTelemetryData(msg, header);
-          const humanCarIndices = rememberHumanCarIndicesFromHeader(sessionUID, header);
+          const packet = parseCarTelemetryData(msg, header, format);
+          const humanCarIndices = rememberHumanCarIndicesFromHeader(sessionUID, header, format);
           telemetryThrottleCounter++;
           if (telemetryThrottleCounter % REALTIME_THROTTLE === 0) {
             const slim = packet.carTelemetryData.map((t, idx) => ({
@@ -283,7 +332,7 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.CarStatus: {
-          const packet = parseCarStatusData(msg, header);
+          const packet = parseCarStatusData(msg, header, format);
           statusThrottleCounter++;
           if (statusThrottleCounter % REALTIME_THROTTLE === 0) {
             const slim = packet.carStatusData.map((s, idx) => ({
@@ -311,7 +360,7 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.FinalClassification: {
-          const packet = parseFinalClassificationData(msg, header);
+          const packet = parseFinalClassificationData(msg, header, format);
           publish(RedisChannel.FinalClassification, {
             sessionUID,
             numCars: packet.numCars,
@@ -333,8 +382,8 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.CarDamage: {
-          const packet = parseCarDamageData(msg, header);
-          const humanCarIndices = rememberHumanCarIndicesFromHeader(sessionUID, header);
+          const packet = parseCarDamageData(msg, header, format);
+          const humanCarIndices = rememberHumanCarIndicesFromHeader(sessionUID, header, format);
           damageThrottleCounter++;
           if (damageThrottleCounter % (REALTIME_THROTTLE * 5) === 0) {
             const slim = packet.carDamageData.map((d, idx) => ({
@@ -356,7 +405,7 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.CarSetups: {
-          const packet = parseCarSetupData(msg, header);
+          const packet = parseCarSetupData(msg, header, format);
           const slim = packet.carSetupData.map((s, idx) => ({
             i: idx,
             frontWing: s.frontWing,
@@ -410,7 +459,7 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.LapPositions: {
-          const packet = parseLapPositionsData(msg, header);
+          const packet = parseLapPositionsData(msg, header, format);
           const entries = [];
           for (let lap = 0; lap < packet.numLaps; lap++) {
             const lapPositions = packet.positionForVehicleIdx[lap] ?? [];
@@ -432,7 +481,7 @@ export function startUDPListener(): dgram.Socket {
         }
 
         case PacketId.CarTelemetry2: {
-          const packet = parseCarTelemetry2Data(msg, header);
+          const packet = parseCarTelemetry2Data(msg, header, format);
           const slim = packet.carTelemetry2Data.map((t, idx) => ({
             i: idx,
             aeroMode: t.activeAeroMode,

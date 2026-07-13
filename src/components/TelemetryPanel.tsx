@@ -20,6 +20,7 @@ export default function TelemetryPanel() {
   const teamColor = driver ? (TEAM_COLORS[driver.team] || '#555') : '#555';
 
   const aero = selectedCarIndex !== null ? carTelemetry2.find((t) => t.i === selectedCarIndex) : null;
+  const hasActiveAero = aero?.is26 === 1;
 
   const gearLabel = car
     ? car.gear === -1 ? 'R' : car.gear === 0 ? 'N' : String(car.gear)
@@ -86,19 +87,19 @@ export default function TelemetryPanel() {
               {/* Active Aero badge */}
               <motion.span
                 animate={{
-                  opacity: aero?.aeroAvail ? 1 : 0.3,
+                  opacity: hasActiveAero ? 1 : 0.3,
                 }}
                 transition={{ duration: 0.15 }}
                 className={`text-[10px] font-bold px-2 py-1 uppercase tracking-[1.5px] ${
-                  aero?.aeroAvail && aero?.aeroMode === 1
+                  hasActiveAero && aero?.aeroMode === 1
                     ? 'bg-[var(--success)] text-black'
-                    : aero?.aeroAvail
+                    : hasActiveAero
                     ? 'bg-[var(--m-blue-dark)]/30 text-[var(--m-blue-dark)]'
                     : 'bg-[var(--surface-elevated)] text-[var(--muted)]'
                 }`}
                 style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}
               >
-                AA {aero?.aeroMode === 1 ? 'STR' : 'CRN'}
+                {hasActiveAero ? `AA ${aero.aeroMode === 1 ? 'STR' : 'CRN'}` : 'AA --'}
               </motion.span>
               {/* Overtake mode badge */}
               <motion.span

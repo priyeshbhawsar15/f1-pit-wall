@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, isFormat2026 } from '../../lib/constants';
+import { HEADER_SIZE } from '../../lib/constants';
+import { TelemetryFormat } from './format';
 
 export interface TimeTrialDataSet {
   carIdx: number;
@@ -46,9 +47,9 @@ function parseTimeTrialDataSet(buf: Buffer, offset: number, is2026: boolean): { 
   };
 }
 
-export function parseTimeTrialData(buf: Buffer, header: PacketHeader): PacketTimeTrialData {
+export function parseTimeTrialData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketTimeTrialData {
   let offset = HEADER_SIZE;
-  const is2026 = isFormat2026(header.packetFormat, header.gameYear);
+  const is2026 = format === 2026;
 
   const r1 = parseTimeTrialDataSet(buf, offset, is2026); offset = r1.newOffset;
   const r2 = parseTimeTrialDataSet(buf, offset, is2026); offset = r2.newOffset;

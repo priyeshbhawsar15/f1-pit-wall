@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS } from '../../lib/constants';
+import { HEADER_SIZE } from '../../lib/constants';
+import { getCarCount, TelemetryFormat } from './format';
 
 export interface CarDamageData {
   tyresWear: number[];
@@ -31,11 +32,11 @@ export interface PacketCarDamageData {
   carDamageData: CarDamageData[];
 }
 
-export function parseCarDamageData(buf: Buffer, header: PacketHeader): PacketCarDamageData {
+export function parseCarDamageData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketCarDamageData {
   const carDamageData: CarDamageData[] = [];
   let offset = HEADER_SIZE;
 
-  for (let i = 0; i < MAX_CARS; i++) {
+  for (let i = 0; i < getCarCount(format); i++) {
     const tyresWear: number[] = [];
     for (let j = 0; j < 4; j++) { tyresWear.push(buf.readFloatLE(offset)); offset += 4; }
 

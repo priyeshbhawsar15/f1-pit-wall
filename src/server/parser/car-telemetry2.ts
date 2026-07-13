@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, maxCarsForFormat, isFormat2026 } from '../../lib/constants';
+import { HEADER_SIZE } from '../../lib/constants';
+import { getCarCount, TelemetryFormat } from './format';
 
 export interface CarTelemetry2Data {
   activeAeroMode: number;               // 0 = corner mode, 1 = straight mode
@@ -17,10 +18,10 @@ export interface PacketCarTelemetry2Data {
   carTelemetry2Data: CarTelemetry2Data[];
 }
 
-export function parseCarTelemetry2Data(buf: Buffer, header: PacketHeader): PacketCarTelemetry2Data {
+export function parseCarTelemetry2Data(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketCarTelemetry2Data {
   const carTelemetry2Data: CarTelemetry2Data[] = [];
   let offset = HEADER_SIZE;
-  const maxCars = maxCarsForFormat(header.packetFormat, header.gameYear);
+  const maxCars = getCarCount(format);
 
   for (let i = 0; i < maxCars; i++) {
     const activeAeroMode               = buf.readUInt8(offset);   offset += 1;

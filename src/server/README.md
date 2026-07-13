@@ -53,12 +53,9 @@ High-frequency packets are throttled with counters to avoid flooding Redis:
 > `REALTIME_THROTTLE` constant controls how many UDP frames are skipped between publishes.
 
 ### 2026 detection
-```ts
-isFormat2026(header.packetFormat, header.gameYear, msg.length, expectedSize)
+`resolveTelemetryFormat()` checks the explicit header, the official packet size, and the cached format for the session. This supports Season Pack payloads that use 2026 sizes with a stale 2025 header. Every packet is size-validated before parsing. A one-time diagnostic log is emitted per session:
 ```
-Checked per-packet. A one-time diagnostic log is emitted for the first motion packet per session:
-```
-[UDP] Session {uid} — packetFormat=2026 gameYear=25 bufLen=1325 → treating as 2026 (24 cars)
+[UDP] Session {uid} packetFormat=2025 gameYear=25 resolved=2026 cars=24
 ```
 
 ### Slim mapping
@@ -158,18 +155,16 @@ Connection logs are emitted on connect, disconnect, and `connection_error`.
 
 ## `parser/` — Packet Parsers
 
-Each parser receives a raw `Buffer` and a `PacketHeader`, returns a typed struct.
+Each version-sensitive parser receives a raw `Buffer`, `PacketHeader`, and resolved `TelemetryFormat`, then returns a typed struct.
 
-### Format branching pattern (all parsers)
+### Format branching pattern
 ```ts
-const is2026 = isFormat2026(header.packetFormat, header.gameYear, buf.length, EXPECTED_2025_SIZE);
-const bytesPerCar = is2026 ? BYTES_PER_CAR_2026 : BYTES_PER_CAR_2025;
-const maxCars = Math.min(
-  Math.floor((buf.length - HEADER_SIZE) / bytesPerCar),
-  is2026 ? MAX_CARS_2026 : MAX_CARS_2025
-);
+const format = resolveTelemetryFormat(header, buf.length, cachedSessionFormat);
+if (!format || !hasValidPacketSize(header.packetId, format, buf.length)) return;
+const bytesPerCar = format === 2026 ? BYTES_PER_CAR_2026 : BYTES_PER_CAR_2025;
+const maxCars = getCarCount(format);
 ```
-`maxCars` is derived from the actual buffer length to handle DLC hybrid scenarios where the game reports 2025 format but sends 2026-sized packets.
+The listener owns format detection so all parsers make the same decision. Exact packet sizes provide the fallback for DLC hybrid scenarios.
 
 ### Key per-format differences
 
@@ -183,4 +178,4 @@ const maxCars = Math.min(
 | Max cars | 22 | 24 |
 
 ### `car-telemetry2.ts` (2026 only — Packet ID 16)
-Parses the new Active Aero + Overtake system packet. Published to `RedisChannel.CarTelemetry2`. Only received when `packetFormat === 2026`.
+Parses the new Active Aero + Overtake system packet. Published to `RedisChannel.CarTelemetry2` when the resolved format is 2026.

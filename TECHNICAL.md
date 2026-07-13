@@ -305,7 +305,7 @@ In F1 25: **Settings → Telemetry → UDP**
 | UDP IP Address | `<server_ip>` | This machine's IP. `127.0.0.1` if same PC |
 | UDP Port | `20777` | Must match `UDP_PORT` |
 | UDP Send Rate | 20Hz or 60Hz | Higher = smoother |
-| UDP Format | 2025 | F1 25 packet format |
+| UDP Format | 2025 or 2026 | Both packet layouts are detected automatically |
 
 ### Network Notes
 - Game and server must be on the **same LAN subnet**
@@ -366,12 +366,12 @@ Every F1 25 UDP packet starts with this header:
 
 | Offset | Size | Type | Field |
 |---|---|---|---|
-| 0 | 2 | uint16 | packetFormat (2025) |
-| 2 | 1 | uint8 | gameYear (25) |
+| 0 | 2 | uint16 | packetFormat (2025 or 2026) |
+| 2 | 1 | uint8 | gameYear (25 or 26) |
 | 3 | 1 | uint8 | gameMajorVersion |
 | 4 | 1 | uint8 | gameMinorVersion |
 | 5 | 1 | uint8 | packetVersion |
-| 6 | 1 | uint8 | packetId (0-15) |
+| 6 | 1 | uint8 | packetId (0-16) |
 | 7 | 8 | uint64 | sessionUID |
 | 15 | 4 | float32 | sessionTime |
 | 19 | 4 | uint32 | frameIdentifier |
@@ -379,7 +379,7 @@ Every F1 25 UDP packet starts with this header:
 | 27 | 1 | uint8 | playerCarIndex |
 | 28 | 1 | uint8 | secondaryPlayerCarIndex |
 
-### All 16 Packet Parsers
+### All 17 Packet Types
 
 | ID | Parser File | Packet Name | Key Fields | Used In |
 |---|---|---|---|---|
@@ -398,7 +398,8 @@ Every F1 25 UDP packet starts with this header:
 | 12 | `tyre-sets.ts` | TyreSets | (parsed but not relayed) | — |
 | 13 | `motion-ex.ts` | MotionEx | (parsed but not relayed) | — |
 | 14 | `time-trial.ts` | TimeTrial | (parsed but not relayed) | — |
-| 15 | `lap-positions.ts` | LapPositions | positionForVehicleIdx[50][22] | PositionChart |
+| 15 | `lap-positions.ts` | LapPositions | positionForVehicleIdx[50][22 or 24] | PositionChart |
+| 16 | `car-telemetry2.ts` | CarTelemetry2 | Active Aero and Overtake state (2026 only) | TelemetryPanel |
 
 ### Slim Data Optimization
 

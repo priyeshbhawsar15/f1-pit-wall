@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS, MAX_TYRE_STINTS } from '../../lib/constants';
+import { HEADER_SIZE, MAX_TYRE_STINTS } from '../../lib/constants';
+import { getCarCount, TelemetryFormat } from './format';
 
 export interface FinalClassificationData {
   position: number;
@@ -25,13 +26,13 @@ export interface PacketFinalClassificationData {
   classificationData: FinalClassificationData[];
 }
 
-export function parseFinalClassificationData(buf: Buffer, header: PacketHeader): PacketFinalClassificationData {
+export function parseFinalClassificationData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketFinalClassificationData {
   let offset = HEADER_SIZE;
 
-  const numCars = buf.readUInt8(offset); offset += 1;
+  const numCars = Math.min(buf.readUInt8(offset), getCarCount(format)); offset += 1;
 
   const classificationData: FinalClassificationData[] = [];
-  for (let i = 0; i < MAX_CARS; i++) {
+  for (let i = 0; i < getCarCount(format); i++) {
     const position = buf.readUInt8(offset); offset += 1;
     const numLaps = buf.readUInt8(offset); offset += 1;
     const gridPosition = buf.readUInt8(offset); offset += 1;

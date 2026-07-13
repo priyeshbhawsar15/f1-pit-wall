@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS_2025, MAX_CARS_2026, isFormat2026, MAX_PARTICIPANT_NAME_LEN, BYTES_PER_CAR_PARTICIPANTS_2025, BYTES_PER_CAR_PARTICIPANTS_2026 } from '../../lib/constants';
+import { HEADER_SIZE, MAX_PARTICIPANT_NAME_LEN, BYTES_PER_CAR_PARTICIPANTS_2025, BYTES_PER_CAR_PARTICIPANTS_2026 } from '../../lib/constants';
+import { getCarCount, TelemetryFormat } from './format';
 
 export interface ParticipantData {
   aiControlled: number;
@@ -24,16 +25,16 @@ export interface PacketParticipantsData {
   participants: ParticipantData[];
 }
 
-export function parseParticipantsData(buf: Buffer, header: PacketHeader): PacketParticipantsData {
+export function parseParticipantsData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketParticipantsData {
   let offset = HEADER_SIZE;
-  const is2026 = isFormat2026(header.packetFormat, header.gameYear, buf.length, HEADER_SIZE + 1 + MAX_CARS_2025 * BYTES_PER_CAR_PARTICIPANTS_2025);
+  const is2026 = format === 2026;
   const bytesPerCar = is2026 ? BYTES_PER_CAR_PARTICIPANTS_2026 : BYTES_PER_CAR_PARTICIPANTS_2025;
   const maxCars = Math.min(
     Math.floor((buf.length - HEADER_SIZE - 1) / bytesPerCar),
-    is2026 ? MAX_CARS_2026 : MAX_CARS_2025,
+    getCarCount(format),
   );
 
-  const numActiveCars = buf.readUInt8(offset); offset += 1;
+  const numActiveCars = Math.min(buf.readUInt8(offset), maxCars); offset += 1;
 
   const participants: ParticipantData[] = [];
   for (let i = 0; i < maxCars; i++) {

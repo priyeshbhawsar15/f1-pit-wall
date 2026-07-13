@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS_2025, MAX_CARS_2026, isFormat2026, BYTES_PER_CAR_MOTION_2025, BYTES_PER_CAR_MOTION_2026 } from '../../lib/constants';
+import { HEADER_SIZE, BYTES_PER_CAR_MOTION_2025, BYTES_PER_CAR_MOTION_2026 } from '../../lib/constants';
+import { getCarCount, TelemetryFormat } from './format';
 
 export interface CarMotionData {
   worldPositionX: number;
@@ -27,14 +28,14 @@ export interface PacketMotionData {
   carMotionData: CarMotionData[];
 }
 
-export function parseMotionData(buf: Buffer, header: PacketHeader): PacketMotionData {
+export function parseMotionData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketMotionData {
   const carMotionData: CarMotionData[] = [];
   let offset = HEADER_SIZE;
-  const is2026 = isFormat2026(header.packetFormat, header.gameYear, buf.length, HEADER_SIZE + MAX_CARS_2025 * BYTES_PER_CAR_MOTION_2025);
+  const is2026 = format === 2026;
   const bytesPerCar = is2026 ? BYTES_PER_CAR_MOTION_2026 : BYTES_PER_CAR_MOTION_2025;
   const maxCars = Math.min(
     Math.floor((buf.length - HEADER_SIZE) / bytesPerCar),
-    is2026 ? MAX_CARS_2026 : MAX_CARS_2025,
+    getCarCount(format),
   );
 
   for (let i = 0; i < maxCars; i++) {

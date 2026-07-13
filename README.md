@@ -46,7 +46,7 @@ This starts all 3 services. Open http://localhost:3333 in your browser.
 3. Set **UDP IP Address** to the machine running this app (or `127.0.0.1` if same machine)
 4. Set **UDP Port** to `20777`
 5. Set **UDP Send Rate** to `30Hz` or higher
-6. Set **UDP Format** to `2025`
+6. Set **UDP Format** to `2025` or `2026`; both layouts are detected automatically
 
 ### Local Development
 

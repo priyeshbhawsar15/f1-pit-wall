@@ -152,8 +152,8 @@ export default function HumanPlayersOverview() {
                         },
                         {
                           label: 'Aero',
-                          value: aero?.aeroAvail ? (aero.aeroMode === 1 ? 'STRAIGHT' : 'CORNER') : '---',
-                          accent: aero?.aeroAvail && aero.aeroMode === 1 ? 'var(--success)' : undefined,
+                          value: aero?.is26 === 1 ? (aero.aeroMode === 1 ? 'STRAIGHT' : 'CORNER') : '---',
+                          accent: aero?.is26 === 1 && aero.aeroMode === 1 ? 'var(--success)' : undefined,
                         },
                       ] : [
                         { label: 'ERS', value: restricted ? 'RESTRICTED' : ersPct !== null ? `${Math.round(ersPct)}%` : '---' },

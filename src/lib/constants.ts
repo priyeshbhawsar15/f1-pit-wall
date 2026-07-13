@@ -1,16 +1,7 @@
 // F1 25/26 UDP Specification Constants
 
-export const MAX_CARS = 22;  // F1 25 default
 export const MAX_CARS_2025 = 22;
 export const MAX_CARS_2026 = 24;
-export function isFormat2026(packetFormat: number, gameYear: number, bufLen = 0, expected2025Size = 0): boolean {
-  if (packetFormat === 2026 || gameYear === 26) return true;
-  if (bufLen > 0 && expected2025Size > 0) return bufLen !== expected2025Size;
-  return false;
-}
-export function maxCarsForFormat(packetFormat: number, gameYear = 0): number {
-  return isFormat2026(packetFormat, gameYear) ? MAX_CARS_2026 : MAX_CARS_2025;
-}
 
 export const BYTES_PER_CAR_MOTION_2025 = 60;
 export const BYTES_PER_CAR_MOTION_2026 = 54;

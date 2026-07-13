@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_MARSHAL_ZONES, MAX_WEATHER_FORECAST_SAMPLES, MAX_SESSIONS_IN_WEEKEND, isFormat2026 } from '../../lib/constants';
+import { HEADER_SIZE, MAX_MARSHAL_ZONES, MAX_WEATHER_FORECAST_SAMPLES, MAX_SESSIONS_IN_WEEKEND } from '../../lib/constants';
+import { TelemetryFormat } from './format';
 
 export interface MarshalZone {
   zoneStart: number;
@@ -69,7 +70,7 @@ export interface PacketSessionData {
   startReactionTime?: number;
 }
 
-export function parseSessionData(buf: Buffer, header: PacketHeader): PacketSessionData {
+export function parseSessionData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketSessionData {
   let offset = HEADER_SIZE;
 
   const weather = buf.readUInt8(offset); offset += 1;
@@ -127,13 +128,13 @@ export function parseSessionData(buf: Buffer, header: PacketHeader): PacketSessi
   const pitStopWindowLatestLap = buf.readUInt8(offset); offset += 1;
   const pitStopRejoinPosition = buf.readUInt8(offset); offset += 1;
 
-  // Skip several assist fields (steeringAssist through formationLapExperience)
-  offset += 30;
+  // Steering assist through safety car settings.
+  offset += 41;
 
   const safetyCarExperience = buf.readUInt8(offset); offset += 1;
 
-  // Skip remaining settings fields until numSessionsInWeekend
-  offset += 3;
+  // Formation lap, formation lap experience, red flags, and licence-level flags.
+  offset += 5;
 
   const numSessionsInWeekend = buf.readUInt8(offset); offset += 1;
 
@@ -157,7 +158,7 @@ export function parseSessionData(buf: Buffer, header: PacketHeader): PacketSessi
     weekendStructure, sector2LapDistanceStart, sector3LapDistanceStart,
   };
 
-  if (!isFormat2026(header.packetFormat, header.gameYear)) return base;
+  if (format !== 2026) return base;
 
   // 2026-only tail fields
   const activeAeroTrackStatus = buf.readUInt8(offset); offset += 1;

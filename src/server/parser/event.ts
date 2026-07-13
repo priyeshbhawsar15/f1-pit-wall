@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, isFormat2026 } from '../../lib/constants';
+import { HEADER_SIZE } from '../../lib/constants';
+import { TelemetryFormat } from './format';
 
 export interface EventDataDetails {
   fastestLap?: { vehicleIdx: number; lapTime: number };
@@ -32,7 +33,7 @@ export interface PacketEventData {
   eventDetails: EventDataDetails;
 }
 
-export function parseEventData(buf: Buffer, header: PacketHeader): PacketEventData {
+export function parseEventData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketEventData {
   let offset = HEADER_SIZE;
 
   const eventStringCode = buf.toString('utf8', offset, offset + 4).replace(/\0/g, '');
@@ -117,7 +118,7 @@ export function parseEventData(buf: Buffer, header: PacketHeader): PacketEventDa
       eventDetails.collision = {
         vehicle1Idx: buf.readUInt8(offset),
         vehicle2Idx: buf.readUInt8(offset + 1),
-        ...(isFormat2026(header.packetFormat, header.gameYear) && { severity: buf.readUInt8(offset + 2) }),
+        ...(format === 2026 && { severity: buf.readUInt8(offset + 2) }),
       };
       break;
     case 'DRSD':

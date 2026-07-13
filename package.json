@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "ts-node --project tsconfig.server.json server.ts",
     "build": "next build",
+    "test": "ts-node --project tsconfig.server.json --transpile-only tests/telemetry-formats.test.cjs",
     "start": "NODE_ENV=production node dist/server.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",

@@ -8,22 +8,9 @@ Shared utilities, lookup constants, and infrastructure singletons used by both t
 
 The central lookup dictionary for everything that maps a numeric game ID to a human-readable value or visual attribute.
 
-### Format Detection (2025 vs 2026)
+### Format Constants (2025 vs 2026)
 
-```ts
-export function isFormat2026(
-  packetFormat: number,
-  gameYear: number,
-  bufLen?: number,
-  expected2025Size?: number
-): boolean
-```
-Returns `true` if `packetFormat === 2026` OR `gameYear === 26`, with an optional fallback: if `bufLen !== expected2025Size`. Called by every parser and `udp-listener.ts`. No manual config needed.
-
-```ts
-export function maxCarsForFormat(packetFormat: number, gameYear: number): number
-// Returns 24 for 2026, 22 for 2025
-```
+`constants.ts` exports the 22-car and 24-car limits plus record sizes shared by packet parsers. Server-side format detection and packet-size validation live in `src/server/parser/format.ts`; the listener resolves a packet once and passes that format into its parser.
 
 ### Bytes-per-Car Constants
 

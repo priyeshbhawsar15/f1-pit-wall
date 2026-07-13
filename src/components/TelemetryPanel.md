@@ -28,7 +28,7 @@ Displays:
 | `telemetry` | Speed, gear, throttle, brake, RPM, engine temp, tyre surface/inner/pressure temps |
 | `drivers` | Driver name, team ID for branding |
 | `session` | `is2026` flag to switch DRS → AA/OT badges |
-| `carTelemetry2` | 2026 Active Aero mode (`aeroAvail`, `aeroMode`) and Overtake system (`otAvail`, `otActive`, `otDist`) |
+| `carTelemetry2` | 2026 Active Aero mode (`is26`, `aeroMode`, `aeroAvail`) and Overtake system (`otAvail`, `otActive`, `otDist`) |
 
 ---
 

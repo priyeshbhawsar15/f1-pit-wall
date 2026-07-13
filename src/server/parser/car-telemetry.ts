@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS_2025, MAX_CARS_2026, isFormat2026, BYTES_PER_CAR_TELEMETRY_2025, BYTES_PER_CAR_TELEMETRY_2026 } from '../../lib/constants';
+import { HEADER_SIZE, BYTES_PER_CAR_TELEMETRY_2025, BYTES_PER_CAR_TELEMETRY_2026 } from '../../lib/constants';
+import { getCarCount, TelemetryFormat } from './format';
 
 export interface CarTelemetryData {
   speed: number;
@@ -28,14 +29,14 @@ export interface PacketCarTelemetryData {
   suggestedGear: number;
 }
 
-export function parseCarTelemetryData(buf: Buffer, header: PacketHeader): PacketCarTelemetryData {
+export function parseCarTelemetryData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketCarTelemetryData {
   const carTelemetryData: CarTelemetryData[] = [];
   let offset = HEADER_SIZE;
-  const is2026 = isFormat2026(header.packetFormat, header.gameYear, buf.length, HEADER_SIZE + MAX_CARS_2025 * BYTES_PER_CAR_TELEMETRY_2025 + 3);
+  const is2026 = format === 2026;
   const bytesPerCar = is2026 ? BYTES_PER_CAR_TELEMETRY_2026 : BYTES_PER_CAR_TELEMETRY_2025;
   const maxCars = Math.min(
     Math.floor((buf.length - HEADER_SIZE - 3) / bytesPerCar),
-    is2026 ? MAX_CARS_2026 : MAX_CARS_2025,
+    getCarCount(format),
   );
 
   for (let i = 0; i < maxCars; i++) {

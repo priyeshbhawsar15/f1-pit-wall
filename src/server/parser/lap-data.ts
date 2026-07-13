@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS } from '../../lib/constants';
+import { HEADER_SIZE } from '../../lib/constants';
+import { getCarCount, TelemetryFormat } from './format';
 
 export interface LapData {
   lastLapTimeInMS: number;
@@ -44,11 +45,11 @@ export interface PacketLapData {
   timeTrialRivalCarIdx: number;
 }
 
-export function parseLapData(buf: Buffer, header: PacketHeader): PacketLapData {
+export function parseLapData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketLapData {
   const lapData: LapData[] = [];
   let offset = HEADER_SIZE;
 
-  for (let i = 0; i < MAX_CARS; i++) {
+  for (let i = 0; i < getCarCount(format); i++) {
     const lastLapTimeInMS = buf.readUInt32LE(offset); offset += 4;
     const currentLapTimeInMS = buf.readUInt32LE(offset); offset += 4;
     const sector1TimeMSPart = buf.readUInt16LE(offset); offset += 2;

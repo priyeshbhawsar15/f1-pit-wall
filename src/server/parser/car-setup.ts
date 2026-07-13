@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_CARS } from '../../lib/constants';
+import { HEADER_SIZE } from '../../lib/constants';
+import { getCarCount, TelemetryFormat } from './format';
 
 export interface CarSetupData {
   frontWing: number;
@@ -33,11 +34,11 @@ export interface PacketCarSetupData {
   nextFrontWingValue: number;
 }
 
-export function parseCarSetupData(buf: Buffer, header: PacketHeader): PacketCarSetupData {
+export function parseCarSetupData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketCarSetupData {
   const carSetupData: CarSetupData[] = [];
   let offset = HEADER_SIZE;
 
-  for (let i = 0; i < MAX_CARS; i++) {
+  for (let i = 0; i < getCarCount(format); i++) {
     const frontWing = buf.readUInt8(offset); offset += 1;
     const rearWing = buf.readUInt8(offset); offset += 1;
     const onThrottle = buf.readUInt8(offset); offset += 1;

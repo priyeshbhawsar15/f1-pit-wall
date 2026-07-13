@@ -1,5 +1,6 @@
 import { PacketHeader } from './header';
-import { HEADER_SIZE, MAX_LAPS_IN_POSITIONS, MAX_CARS_2025, MAX_CARS_2026, isFormat2026 } from '../../lib/constants';
+import { HEADER_SIZE, MAX_LAPS_IN_POSITIONS } from '../../lib/constants';
+import { getCarCount, TelemetryFormat } from './format';
 
 export interface PacketLapPositionsData {
   header: PacketHeader;
@@ -8,14 +9,13 @@ export interface PacketLapPositionsData {
   positionForVehicleIdx: number[][];
 }
 
-export function parseLapPositionsData(buf: Buffer, header: PacketHeader): PacketLapPositionsData {
+export function parseLapPositionsData(buf: Buffer, header: PacketHeader, format: TelemetryFormat): PacketLapPositionsData {
   let offset = HEADER_SIZE;
 
   const numLaps = buf.readUInt8(offset); offset += 1;
   const lapStart = buf.readUInt8(offset); offset += 1;
 
-  const expected2025 = HEADER_SIZE + 2 + MAX_LAPS_IN_POSITIONS * MAX_CARS_2025;
-  const maxCars = isFormat2026(header.packetFormat, header.gameYear, buf.length, expected2025) ? MAX_CARS_2026 : MAX_CARS_2025;
+  const maxCars = getCarCount(format);
   const positionForVehicleIdx: number[][] = [];
   for (let lap = 0; lap < MAX_LAPS_IN_POSITIONS; lap++) {
     const positions: number[] = [];
