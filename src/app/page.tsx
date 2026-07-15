@@ -40,15 +40,15 @@ export default function Dashboard() {
             animate="animate"
             exit="exit"
             transition={{ duration: 0.2 }}
-            className="flex-1 grid grid-cols-12 gap-3 p-3 overflow-hidden min-h-0"
+            className="dashboard-shell flex-1 grid grid-cols-1 xl:grid-cols-12 overflow-hidden"
           >
-            <div className="col-span-12 xl:col-span-4 min-h-0 h-full">
+            <aside className="xl:col-span-4 min-h-[32rem] xl:min-h-0 xl:h-full">
               <Leaderboard />
-            </div>
-            <div className="col-span-12 xl:col-span-8 flex flex-col gap-3 overflow-y-auto min-h-0">
+            </aside>
+            <main className="xl:col-span-8 flex flex-col gap-4 overflow-y-auto min-h-0">
               <HumanPlayersOverview />
               {selectedCarIndex !== null && (
-                <div className="grid grid-cols-1 2xl:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 2xl:grid-cols-3 gap-4">
                   <TelemetryPanel />
                   <ERSMonitor />
                   <TyreStrategy />
@@ -56,7 +56,7 @@ export default function Dashboard() {
               )}
               <EventFeed />
               <TrackMap />
-            </div>
+            </main>
           </motion.div>
         )}
 
@@ -68,13 +68,13 @@ export default function Dashboard() {
             animate="animate"
             exit="exit"
             transition={{ duration: 0.2 }}
-            className="flex-1 grid grid-cols-12 gap-3 p-3 overflow-hidden min-h-0"
+            className="dashboard-shell flex-1 grid grid-cols-1 xl:grid-cols-12 overflow-hidden"
           >
-            <div className="col-span-3 overflow-y-auto min-h-0">
+            <div className="xl:col-span-4 overflow-y-auto min-h-[28rem] xl:min-h-0">
               <Leaderboard />
             </div>
-            <div className="col-span-9 flex flex-col gap-2 overflow-y-auto min-h-0">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="xl:col-span-8 flex flex-col gap-4 overflow-y-auto min-h-0">
+              <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
                 <LapTimeChart />
                 <PositionChart />
               </div>
@@ -91,15 +91,15 @@ export default function Dashboard() {
             animate="animate"
             exit="exit"
             transition={{ duration: 0.2 }}
-            className="flex-1 grid grid-cols-12 gap-3 p-3 overflow-hidden min-h-0"
+            className="dashboard-shell flex-1 grid grid-cols-1 xl:grid-cols-12 overflow-hidden"
           >
-            <div className="col-span-3 overflow-y-auto min-h-0">
+            <div className="xl:col-span-4 overflow-y-auto min-h-[28rem] xl:min-h-0">
               <Leaderboard />
             </div>
-            <div className="col-span-5 overflow-y-auto min-h-0">
+            <div className="xl:col-span-5 overflow-y-auto min-h-0">
               <CarSetupComparison />
             </div>
-            <div className="col-span-4 flex flex-col gap-3 overflow-y-auto min-h-0">
+            <div className="xl:col-span-3 flex flex-col gap-4 overflow-y-auto min-h-0">
               {selectedCarIndex !== null ? (
                 <>
                   <TelemetryPanel />

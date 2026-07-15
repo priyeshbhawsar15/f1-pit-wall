@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* ──────────────────────────────────────────────────────────
-   BMW M PIT WALL DESIGN SYSTEM
-   Flat, sharp, typographic — no glass, no shadows, no glow
+   F1 TELEMETRY DESIGN SYSTEM
+   Calm race intelligence: layered, precise, two-player first
    ────────────────────────────────────────────────────────── */
 
 /* ══════════════════════════════════════
@@ -13,25 +13,25 @@
   --font-ui: 'Satoshi', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Canvas */
-  --background: #000000;
-  --background-secondary: #0d0d0d;
+  --background: #090a0c;
+  --background-secondary: #0f1115;
 
   /* Text */
   --foreground: #ffffff;
-  --foreground-secondary: #e6e6e6;
-  --body: #bbbbbb;
-  --muted: #7e7e7e;
-  --muted-foreground: #7e7e7e; /* alias for component compat */
+  --foreground-secondary: #e2e5e9;
+  --body: #c1c6ce;
+  --muted: #969da8;
+  --muted-foreground: #969da8; /* alias for component compat */
 
   /* Surfaces */
-  --surface-card: #1a1a1a;
-  --surface-elevated: #262626;
-  --surface-soft: #0d0d0d;
-  --surface: #0d0d0d;           /* alias for component compat */
-  --surface-hover: #262626;
-  --card: #1a1a1a;              /* alias */
-  --card-solid: #1a1a1a;
-  --card-hover: #262626;
+  --surface-card: #14171c;
+  --surface-elevated: #20242b;
+  --surface-soft: #101217;
+  --surface: #101217;           /* alias for component compat */
+  --surface-hover: #1a1e24;
+  --card: #14171c;              /* alias */
+  --card-solid: #14171c;
+  --card-hover: #1a1e24;
 
   /* BMW M Tricolor (brand-identity only, never for CTAs) */
   --m-blue-light: #0066b1;
@@ -43,10 +43,16 @@
   --success: #0fa336;
 
   /* Hairlines */
-  --hairline: #3c3c3c;
-  --hairline-strong: #262626;
-  --card-border: #3c3c3c;       /* alias */
-  --card-border-hover: #555555;
+  --hairline: #30343c;
+  --hairline-strong: #242830;
+  --card-border: #30343c;       /* alias */
+  --card-border-hover: #464c57;
+
+  /* Shape + motion */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Legacy aliases (keep for component compatibility) */
   --f1-red: #e22718;            /* maps to M red */
@@ -73,19 +79,6 @@
 /* ══════════════════════════════════════
    TYPOGRAPHY
    ══════════════════════════════════════ */
-@font-face {
-  font-family: 'BMWTypeNextLatin';
-  src: local('BMWTypeNextLatin'), local('BMW Type Next Latin');
-  font-weight: 300;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'BMWTypeNextLatin';
-  src: local('BMWTypeNextLatin'), local('BMW Type Next Latin Bold');
-  font-weight: 700;
-  font-display: swap;
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -93,36 +86,25 @@ body {
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-width: 320px;
 }
 
 /* ══════════════════════════════════════
-   SCROLLBAR — minimal
-   ══════════════════════════════════════ */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--hairline) transparent;
-}
-*::-webkit-scrollbar { width: 4px; height: 4px; }
-*::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 0; }
-*::-webkit-scrollbar-thumb:hover { background: var(--surface-elevated); }
-
-/* ══════════════════════════════════════
-   CARD SYSTEM — flat, sharp, no blur
+   SURFACE SYSTEM — quiet layers, no decorative shadows
    ══════════════════════════════════════ */
 .card {
   background: var(--surface-card);
-  border: 1px solid var(--hairline);
-  border-radius: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: border-color 0.2s ease;
+  transition: background-color 180ms var(--ease-out), border-color 180ms var(--ease-out);
 }
 .card:hover {
-  border-color: var(--card-border-hover);
+  border-color: var(--hairline);
 }
 
 .card-header {
-  padding: 16px 20px;
+  padding: 15px 18px;
   border-bottom: 1px solid var(--hairline);
   display: flex;
   align-items: center;
@@ -132,37 +114,33 @@ body {
 
 .card-title {
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
   color: var(--foreground);
 }
 
 /* M-stripe top accent — only for main accent cards */
-.card-accent {
-  border-top: 4px solid transparent;
-  border-image: linear-gradient(90deg, var(--m-blue-light), var(--m-blue-dark), var(--m-red)) 1;
-}
+.card-accent { border-color: var(--hairline-strong); }
 
 /* Individual color variants — no glow, no box-shadow */
-.card-red    { border-top: 2px solid var(--m-red); }
-.card-green  { border-top: 2px solid var(--success); }
-.card-blue   { border-top: 2px solid var(--m-blue-dark); }
-.card-purple { border-top: 2px solid var(--hairline-strong); }
+.card-red,
+.card-green,
+.card-blue,
+.card-purple { border-color: var(--hairline-strong); }
 
 /* ══════════════════════════════════════
    M-STRIPE DIVIDER — brand signature
    ══════════════════════════════════════ */
 .m-stripe {
-  height: 4px;
+  height: 3px;
   background: linear-gradient(90deg, var(--m-blue-light) 0%, var(--m-blue-dark) 50%, var(--m-red) 100%);
   flex-shrink: 0;
 }
 
 /* red-bar alias — retains class name, updated to M-stripe */
 .red-bar {
-  height: 4px;
+  height: 3px;
   background: linear-gradient(90deg, var(--m-blue-light) 0%, var(--m-blue-dark) 50%, var(--m-red) 100%);
   flex-shrink: 0;
 }
@@ -171,17 +149,9 @@ body {
    HEADER — BMW M top-nav style
    ══════════════════════════════════════ */
 .f1-header {
-  background: #000000;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
   border-bottom: 1px solid var(--hairline);
-}
-
-.f1-logo-text {
-  font-family: var(--font-ui);
-  font-weight: 700;
-  color: var(--foreground);
-  font-size: 18px;
-  letter-spacing: 1.5px;
-  line-height: 1;
+  backdrop-filter: blur(16px);
 }
 
 /* ══════════════════════════════════════
@@ -197,7 +167,8 @@ body {
   font-size: 12px;
   font-weight: 700;
   color: var(--foreground);
-  background: var(--surface-elevated);
+  background: transparent;
+  border-radius: var(--radius-sm);
 }
 .pos-badge.p1 { background: var(--m-red); color: #ffffff; }
 .pos-badge.p2 { background: var(--surface-elevated); color: var(--foreground-secondary); }
@@ -211,9 +182,9 @@ body {
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  border-radius: 0;
+  border-radius: 999px;
   font-family: var(--font-ui);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -234,7 +205,7 @@ body {
 .pill-pit {
   background: var(--warning);
   color: #000000;
-  font-size: 8px;
+  font-size: 10px;
   padding: 1px 6px;
 }
 
@@ -268,14 +239,14 @@ body {
    STAT BLOCK — flat surface-soft
    ══════════════════════════════════════ */
 .stat-block {
-  background: var(--surface-soft);
-  border-radius: 0;
-  padding: 12px 14px;
-  border: 1px solid var(--hairline-strong);
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  border: 0;
   transition: background 0.2s ease;
 }
 .stat-block:hover {
-  background: var(--surface-elevated);
+  background: var(--surface-hover);
 }
 
 /* ══════════════════════════════════════
@@ -335,9 +306,10 @@ body {
   flex-shrink: 0;
 }
 
-.team-stripe {
-  width: 3px;
-  border-radius: 0;
+.team-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
@@ -365,14 +337,13 @@ body {
 .throttle-bar {
   height: 8px;
   background: var(--surface-elevated);
-  border-radius: 0;
+  border-radius: 999px;
   overflow: hidden;
-  border: 1px solid var(--hairline-strong);
+  border: 0;
 }
 .throttle-bar-fill {
   height: 100%;
-  border-radius: 0;
-  transition: width 80ms linear;
+  border-radius: inherit;
 }
 
 /* ══════════════════════════════════════
@@ -398,7 +369,7 @@ body {
 select {
   background: var(--surface-card);
   border: 1px solid var(--hairline);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   color: var(--foreground);
   padding: 6px 10px;
   font-size: 11px;
@@ -415,6 +386,76 @@ select option { background: var(--surface-card); color: var(--foreground); }
    ══════════════════════════════════════ */
 .ambient-bg {
   position: relative;
+  background:
+    radial-gradient(circle at 75% -20%, rgba(28, 105, 212, 0.09), transparent 34rem),
+    var(--background);
+}
+
+.dashboard-shell {
+  min-height: 0;
+  padding: 18px;
+  gap: 16px;
+}
+
+.player-comparison {
+  background: linear-gradient(135deg, rgba(28, 105, 212, 0.08), transparent 45%), var(--surface-card);
+}
+
+.player-panel {
+  min-width: 0;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 180ms var(--ease-out), border-color 180ms var(--ease-out), transform 180ms var(--ease-out);
+}
+
+.player-panel:hover {
+  background: var(--surface-hover);
+}
+
+.player-panel:focus-visible,
+.player-panel[data-selected="true"] {
+  outline: none;
+  border-color: color-mix(in srgb, var(--m-blue-dark) 72%, white);
+}
+
+.player-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--hairline-strong);
+  margin-top: 16px;
+  padding-top: 14px;
+}
+
+.player-metric {
+  min-width: 0;
+  padding: 0 10px;
+  border-right: 1px solid var(--hairline-strong);
+}
+
+.player-metric:first-child { padding-left: 0; }
+.player-metric:last-child { border-right: 0; padding-right: 0; }
+
+@media (max-width: 1279px) {
+  .dashboard-shell { overflow-y: auto; }
+}
+
+@media (max-width: 767px) {
+  .dashboard-shell { padding: 10px; gap: 10px; }
+  .player-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 0; }
+  .player-metric:nth-child(2) { border-right: 0; }
+  .speed-readout { font-size: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ══════════════════════════════════════

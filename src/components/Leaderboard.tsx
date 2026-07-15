@@ -45,7 +45,7 @@ export default function Leaderboard() {
     <div className="card card-red h-full flex flex-col">
       <div className="card-header">
         <span className="card-title">Leaderboard</span>
-        <span className="text-[9px] font-mono text-[var(--muted-foreground)]">{sorted.length} cars</span>
+        <span className="text-[10px] font-mono text-[var(--muted-foreground)]">{sorted.length} cars</span>
       </div>
       <div className="overflow-y-auto flex-1">
         <AnimatePresence initial={false}>
@@ -72,14 +72,14 @@ export default function Leaderboard() {
                 onClick={() => setSelectedCarIndex(isSelected ? null : car.i)}
                 className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-[var(--hairline-strong)] transition-colors ${
                   battlingHumans.has(car.i)
-                    ? 'bg-[var(--m-blue-light)]/[0.06] border-l-2 border-l-[var(--m-blue-light)]'
+                    ? 'bg-[var(--m-blue-light)]/[0.08]'
                     : isSelected
                     ? 'bg-white/[0.05]'
                     : 'hover:bg-white/[0.02]'
                 }`}
               >
-                {/* Team color stripe */}
-                <div className="team-stripe h-10" style={{ backgroundColor: teamColor }} />
+                {/* Team identity */}
+                <div className="team-dot" style={{ backgroundColor: teamColor }} />
 
                 {/* Position badge */}
                 <div className={posClass(car.pos)}>
@@ -94,7 +94,7 @@ export default function Leaderboard() {
                         src={DRIVER_FLAGS[driver.name]}
                         alt=""
                         className="flex-shrink-0"
-                        style={{ width: 20, height: 13, objectFit: 'cover', borderRadius: 0 }}
+                        style={{ width: 20, height: 13, objectFit: 'cover', borderRadius: 2 }}
                       />
                     )}
                     <span className="text-[13px] font-bold truncate"
@@ -108,8 +108,8 @@ export default function Leaderboard() {
                           animate={{ scale: 1, opacity: 1 }}
                           exit={{ scale: 0, opacity: 0 }}
                           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                          className="text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-[1px] bg-[var(--m-blue-dark)]/20 text-[var(--m-blue-dark)] border border-[var(--m-blue-dark)]/30"
-                          style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}
+                          className="text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-[1px] bg-[var(--m-blue-dark)]/20 text-[var(--m-blue-dark)] border border-[var(--m-blue-dark)]/30"
+                          style={{ fontFamily: "var(--font-ui)", borderRadius: 999 }}
                         >
                           HUMAN
                         </motion.span>
@@ -146,7 +146,7 @@ export default function Leaderboard() {
                   <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
                     <div
                       className="w-[12px] h-[12px]"
-                      style={{ backgroundColor: tyreInfo.color, borderRadius: 0 }}
+                      style={{ backgroundColor: tyreInfo.color, borderRadius: 999 }}
                     />
                     <span className="text-[10px] text-[var(--muted)] tabular-nums font-mono">
                       {status?.tyreAge ?? ''}L

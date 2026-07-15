@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTelemetryStore } from '@/stores/telemetryStore';
 import { TRACK_NAMES, SESSION_TYPES, WEATHER_TYPES } from '@/lib/constants';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Cloud, Thermometer, Timer, MapPin, CircleDot,
   Radio, History, Users, Trophy, Calendar,
@@ -50,117 +49,47 @@ export default function SessionInfo() {
     <div>
       <div className="red-bar" />
       <header className="f1-header text-xs">
-        {/* Main row: branding + session info + nav */}
-        <div className="flex items-center gap-5 px-6 py-3">
-          <motion.div
-            className="flex items-center gap-2.5 mr-1 flex-shrink-0"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4 }}
-          >
+        <div className="flex min-h-14 flex-wrap items-center gap-x-5 gap-y-3 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-2.5 flex-shrink-0">
             <img
               src="https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg"
               alt="F1"
               style={{ height: 20, width: 'auto', filter: 'brightness(0) invert(1)' }}
             />
-            <span className="text-[11px] font-bold text-[var(--muted)] tracking-[0.2em] uppercase" style={FONT_UI}>
-              TELEMETRY
+            <span className="text-[11px] font-bold text-[var(--muted)] tracking-[0.12em] uppercase" style={FONT_UI}>
+              Race telemetry
             </span>
-          </motion.div>
+          </div>
 
-          <div className="divider-v" />
-
-          <motion.div
+          <div
             className={connected ? 'pill pill-live' : 'pill pill-offline'}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            key={connected ? 'live' : 'offline'}
           >
             {connected && <span className="live-dot" />}
             {connected ? 'LIVE' : 'OFFLINE'}
-          </motion.div>
+          </div>
 
-          <div className="divider-v" />
-
-          <motion.div
-            className="flex items-center gap-1.5"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-          >
+          <div className="flex min-w-0 items-center gap-1.5">
             <MapPin size={12} className="text-[var(--m-blue-dark)]" />
-            <span className="font-semibold" style={{ fontFamily: "var(--font-ui)", fontSize: '13px' }}>
+            <span className="truncate font-semibold" style={{ fontFamily: "var(--font-ui)", fontSize: '13px' }}>
               {trackName}
             </span>
-            <span className="text-[var(--hairline)] mx-1">|</span>
-            <span className="text-[var(--muted)] text-[12px] tracking-wider uppercase">{sessionType}</span>
+            <span className="text-[var(--muted)]">·</span>
+            <span className="text-[var(--muted)] text-[12px]">{sessionType}</span>
             {session?.is2026 === true && (
-              <span
-                className="text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-[1px] bg-[var(--m-red)]/20 text-[var(--m-red)] border border-[var(--m-red)]/40"
-                style={{ fontFamily: "var(--font-ui)", borderRadius: 0 }}
-              >
+              <span className="pill text-[10px] bg-[var(--m-red)]/15 text-[#ff6257]" style={FONT_UI}>
                 F1 26
               </span>
             )}
-          </motion.div>
+          </div>
 
-          <div className="divider-v" />
-
-          <motion.div
-            className="flex items-center gap-3"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-          >
-            <div className="flex items-center gap-1">
-              <Cloud size={11} className="text-[var(--m-blue-dark)]" />
-              <span className="text-[var(--foreground-secondary)]">{weather}</span>
+          {safetyCarLabel && (
+            <div className={`pill ${safetyCarLabel === 'Virtual SC' ? 'pill-vsc' : 'pill-sc'}`}>
+              <CircleDot size={9} />
+              {safetyCarLabel}
             </div>
-            <div className="flex items-center gap-1 text-[var(--muted-foreground)]">
-              <Thermometer size={11} className="text-[var(--orange)]" />
-              <span className="font-mono text-[12px]">{session?.airTemperature ?? '--'}°</span>
-              <span className="text-[10px] uppercase tracking-wider text-[var(--muted)] ml-0.5">Air</span>
-              <span className="font-mono text-[12px] ml-2">{session?.trackTemperature ?? '--'}°</span>
-              <span className="text-[10px] uppercase tracking-wider text-[var(--muted)] ml-0.5">Trk</span>
-            </div>
-          </motion.div>
+          )}
 
-          <div className="divider-v" />
-
-          <motion.div
-            className="flex items-center gap-1.5"
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.25 }}
-          >
-            <Timer size={11} className="text-[var(--muted-foreground)]" />
-            <span className="font-mono font-bold text-[16px] tracking-tight tabular-nums">{timeLeft}</span>
-            {session && session.totalLaps > 0 && (
-              <span className="text-[var(--muted)] text-[12px] tracking-wide">/ {session.totalLaps} LAPS</span>
-            )}
-          </motion.div>
-
-          <AnimatePresence>
-            {safetyCarLabel && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8, x: -8 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.8, x: -8 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className="flex items-center gap-2"
-              >
-                <div className="divider-v" />
-                <div className={`pill ${safetyCarLabel === 'Virtual SC' ? 'pill-vsc' : 'pill-sc'}`}>
-                  <CircleDot size={9} />
-                  {safetyCarLabel.toUpperCase()}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Nav links */}
-          <nav className="flex items-center gap-1 ml-auto">
+          <nav className="order-last flex w-full items-center gap-1 overflow-x-auto lg:order-none lg:ml-auto lg:w-auto" aria-label="Primary navigation">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
@@ -168,10 +97,10 @@ export default function SessionInfo() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[1.5px] transition-colors ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-[11px] font-semibold transition-colors ${
                     isActive
-                      ? 'text-[var(--foreground)] border-b-2 border-[var(--foreground)]'
-                      : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+                      ? 'bg-[var(--surface-elevated)] text-[var(--foreground)]'
+                      : 'text-[var(--muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]'
                   }`}
                   style={FONT_UI}
                 >
@@ -183,26 +112,33 @@ export default function SessionInfo() {
           </nav>
         </div>
 
-        {/* Dashboard view tab row */}
-        <div className="border-t border-[var(--hairline)] px-6 flex items-center gap-1">
-          {dashTabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold uppercase tracking-[1.5px] transition-colors border-b-2 -mb-px ${
-                  activeTab === tab.key
-                    ? 'text-[var(--foreground)] border-[var(--m-red)]'
-                    : 'text-[var(--muted)] border-transparent hover:text-[var(--foreground)]'
-                }`}
-                style={FONT_UI}
-              >
-                <Icon size={11} />
-                {tab.label}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-4 overflow-x-auto border-t border-[var(--hairline-strong)] px-4 sm:px-6">
+          <div className="flex items-center gap-1">
+            {dashTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-[11px] font-semibold transition-colors ${
+                    activeTab === tab.key
+                      ? 'border-[var(--m-red)] text-[var(--foreground)]'
+                      : 'border-transparent text-[var(--muted)] hover:text-[var(--foreground)]'
+                  }`}
+                  style={FONT_UI}
+                >
+                  <Icon size={12} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="ml-auto hidden shrink-0 items-center gap-5 text-[11px] text-[var(--muted-foreground)] md:flex">
+            <span className="flex items-center gap-1.5"><Cloud size={12} />{weather}</span>
+            <span className="flex items-center gap-1.5"><Thermometer size={12} />{session?.airTemperature ?? '--'}° air · {session?.trackTemperature ?? '--'}° track</span>
+            <span className="flex items-center gap-1.5"><Timer size={12} /><strong className="font-mono text-sm text-[var(--foreground)]">{timeLeft}</strong>{session && session.totalLaps > 0 ? ` · ${session.totalLaps} laps` : ''}</span>
+          </div>
         </div>
       </header>
     </div>

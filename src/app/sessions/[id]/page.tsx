@@ -438,7 +438,7 @@ export default function SessionReplayPage() {
                       return (
                         <div key={p.carIndex}>
                           <div className="flex items-center gap-2 py-0.5">
-                            <div className="team-stripe h-4" style={{ backgroundColor: TEAM_COLORS[p.teamId] || '#666' }} />
+                            <div className="team-dot" style={{ backgroundColor: TEAM_COLORS[p.teamId] || '#666' }} />
                             <span className="text-[11px] flex-1 truncate">{p.name}</span>
                             {linked && (
                               <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: linked.color }} />

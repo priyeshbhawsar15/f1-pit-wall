@@ -16,6 +16,7 @@ export default function HumanPlayersOverview() {
   const carTelemetry2 = useTelemetryStore((s) => s.carTelemetry2);
   const session = useTelemetryStore((s) => s.session);
   const selectedCarIndex = useTelemetryStore((s) => s.selectedCarIndex);
+  const setSelectedCarIndex = useTelemetryStore((s) => s.setSelectedCarIndex);
 
   const is2026 = session?.is2026 === true;
 
@@ -60,26 +61,31 @@ export default function HumanPlayersOverview() {
   }, [carStatus, carTelemetry2, drivers, lapData]);
 
   return (
-    <motion.div
-      className="card"
+    <motion.section
+      className="card player-comparison"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       <div className="card-header">
-        <span className="card-title">Players</span>
-        <span className="text-[9px] text-[var(--muted-foreground)]" style={BMW_FONT}>
-          {humanPlayers.length} tracked
+        <div>
+          <h2 className="card-title">Head-to-head</h2>
+          <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">
+            The two-player race at a glance
+          </p>
+        </div>
+        <span className="text-[10px] text-[var(--muted-foreground)]" style={BMW_FONT}>
+          {humanPlayers.length}/2 live
         </span>
       </div>
 
-      <div className="p-4 space-y-3">
+      <div className="p-3 sm:p-4">
         {humanPlayers.length === 0 ? (
-          <div className="text-center py-8 text-[10px] text-[var(--muted-foreground)]" style={BMW_FONT}>
-            WAITING FOR HUMAN PLAYERS
+          <div className="text-center py-10 text-sm text-[var(--muted-foreground)]" style={BMW_FONT}>
+            Waiting for the two human players
           </div>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-2">
             {humanPlayers.map(({ driver, lap, status, aero, tyreInfo, ersPct, raceState, restricted }, index) => {
               const isSelected = driver.i === selectedCarIndex;
               const teamColor = TEAM_COLORS[driver.team] || '#666';
@@ -94,32 +100,37 @@ export default function HumanPlayersOverview() {
                       : '---';
 
               return (
-                <motion.div
+                <motion.button
                   key={driver.i}
-                  className={`border border-[var(--card-border)] bg-[var(--surface)] p-3 ${isSelected ? 'ring-1 ring-[var(--m-blue-dark)]' : ''}`}
+                  type="button"
+                  data-selected={isSelected}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedCarIndex(isSelected ? null : driver.i)}
+                  className="player-panel text-left"
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  style={{ borderRadius: 0 }}
                 >
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="team-stripe h-12" style={{ backgroundColor: teamColor }} />
+                  <div className="flex items-start gap-3">
+                    <div className="team-dot mt-2" style={{ backgroundColor: teamColor }} />
+                    <div className="text-4xl font-bold leading-none tabular-nums tracking-[-0.03em]">
+                      {lap?.pos ?? '–'}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <div className="pos-badge">{lap?.pos ?? '--'}</div>
                         {driver.name && DRIVER_FLAGS[driver.name] && (
                           <img
                             src={DRIVER_FLAGS[driver.name]}
                             alt=""
-                            style={{ width: 20, height: 13, objectFit: 'cover', borderRadius: 0 }}
+                            style={{ width: 20, height: 13, objectFit: 'cover', borderRadius: 2 }}
                           />
                         )}
-                        <span className="text-[13px] font-bold truncate" style={BMW_FONT}>
+                        <span className="text-base font-bold truncate" style={BMW_FONT}>
                           {driver.name || `Car ${driver.i}`}
                         </span>
                         {isSelected && (
-                          <span className="text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-[1px] bg-[var(--m-blue-dark)]/20 text-[var(--m-blue-dark)] border border-[var(--m-blue-dark)]/30" style={{ ...BMW_FONT, borderRadius: 0 }}>
-                            SELECTED
+                          <span className="pill text-[10px] bg-[var(--m-blue-dark)]/20 text-[#67a0ff]" style={BMW_FONT}>
+                            Detail open
                           </span>
                         )}
                       </div>
@@ -138,56 +149,43 @@ export default function HumanPlayersOverview() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="player-metrics">
                     {[
-                      { label: 'Gap', value: gapValue, accent: lap?.pos === 1 ? '#FFD700' : undefined },
-                      { label: 'Lap', value: lap ? `${lap.lap}` : '--' },
+                      { label: 'Interval', value: gapValue, accent: lap?.pos === 1 ? 'var(--warning)' : undefined },
                       { label: 'Last Lap', value: lap?.lastLap ? formatLapTime(lap.lastLap) : '--:--.---' },
                       { label: 'Tyres', value: tyreInfo ? `${tyreInfo.name} · ${status?.tyreAge ?? '--'}L` : '---' },
-                      ...(is2026 ? [
-                        {
-                          label: 'Overtake',
-                          value: aero?.otActive ? 'ACTIVE' : aero?.otAvail ? 'READY' : aero ? `${aero.otDist}m` : '---',
-                          accent: aero?.otActive ? 'var(--warning)' : aero?.otAvail ? 'var(--success)' : undefined,
-                        },
-                        {
-                          label: 'Aero',
-                          value: aero?.is26 === 1 ? (aero.aeroMode === 1 ? 'STRAIGHT' : 'CORNER') : '---',
-                          accent: aero?.is26 === 1 && aero.aeroMode === 1 ? 'var(--success)' : undefined,
-                        },
-                      ] : [
-                        { label: 'ERS', value: restricted ? 'RESTRICTED' : ersPct !== null ? `${Math.round(ersPct)}%` : '---' },
-                        { label: 'Fuel', value: restricted ? 'RESTRICTED' : status ? `${status.fuelLaps.toFixed(1)} LAPS` : '---' },
-                      ]),
-                      ...(!is2026 ? [] : [
-                        { label: 'ERS', value: restricted ? 'RESTRICTED' : ersPct !== null ? `${Math.round(ersPct)}%` : '---' },
-                        { label: 'Fuel', value: restricted ? 'RESTRICTED' : status ? `${status.fuelLaps.toFixed(1)} LAPS` : '---' },
-                      ]),
-                      { label: 'Penalties', value: lap ? `${lap.penalties}s` : '0s', accent: lap && lap.penalties > 0 ? 'var(--warning)' : undefined },
                       { label: 'State', value: raceState, accent: raceState === 'PIT' ? 'var(--warning)' : raceState.includes('PEN') ? 'var(--m-red)' : 'var(--success)' },
                     ].map((stat) => (
-                      <div key={stat.label} className="stat-block">
-                        <div className="text-[9px] text-[var(--muted-foreground)] uppercase tracking-wider mb-1" style={BMW_FONT}>
+                      <div key={stat.label} className="player-metric">
+                        <div className="text-[10px] text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>
                           {stat.label}
                         </div>
-                        <div className="text-[12px] font-mono font-bold tabular-nums" style={stat.accent ? { color: stat.accent } : undefined}>
+                        <div className="text-[12px] font-mono font-semibold tabular-nums truncate" style={stat.accent ? { color: stat.accent } : undefined}>
                           {stat.value}
                         </div>
                       </div>
                     ))}
                   </div>
-                </motion.div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-[var(--muted-foreground)]">
+                    <span>Lap <strong className="text-[var(--foreground-secondary)]">{lap?.lap ?? '–'}</strong></span>
+                    <span>ERS <strong className="text-[var(--foreground-secondary)]">{restricted ? 'Restricted' : ersPct !== null ? `${Math.round(ersPct)}%` : '–'}</strong></span>
+                    <span>Fuel <strong className="text-[var(--foreground-secondary)]">{restricted ? 'Restricted' : status ? `${status.fuelLaps.toFixed(1)} laps` : '–'}</strong></span>
+                    {lap && lap.penalties > 0 && <span className="text-[var(--warning)]">{lap.penalties}s penalty</span>}
+                    {is2026 && aero?.otAvail && <span className="text-[var(--warning)]">Overtake {aero.otActive ? 'active' : 'ready'}</span>}
+                  </div>
+                </motion.button>
               );
             })}
           </div>
         )}
 
-        <div className="text-[10px] text-[var(--muted-foreground)]" style={BMW_FONT}>
+        <div className="px-2 pt-3 text-[11px] text-[var(--muted-foreground)]" style={BMW_FONT}>
           {selectedDriver
-            ? `Selected: ${selectedDriver.name || `Car ${selectedDriver.i}`}. Detailed telemetry is shown below.`
-            : 'Select a row in the leaderboard to open detailed telemetry, ERS, and tyre panels.'}
+            ? `${selectedDriver.name || `Car ${selectedDriver.i}`} detail is open below.`
+            : 'Select either player for telemetry, ERS, and tyre detail.'}
         </div>
       </div>
-    </motion.div>
+    </motion.section>
   );
 }
