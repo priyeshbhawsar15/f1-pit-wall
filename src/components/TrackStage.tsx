@@ -12,6 +12,7 @@ export interface MapCar {
   team?: number;
   player?: boolean;
   position?: number;
+  progress?: number;
 }
 
 function fallbackCircuit(width: number, height: number) {
@@ -68,20 +69,35 @@ export function TrackStage({
       const point = (x: number, z: number) => [offsetX + (x - minX) * scale, offsetY + (z - minZ) * scale] as const;
 
       const circuit = providedTrack.length >= 3 ? providedTrack.map((trackPoint) => point(trackPoint.x, trackPoint.z)) : track;
+      const firstCircuitPoint = circuit[0];
+      const lastCircuitPoint = circuit[circuit.length - 1];
+      const endpointDistance = Math.hypot(lastCircuitPoint[0] - firstCircuitPoint[0], lastCircuitPoint[1] - firstCircuitPoint[1]);
+      const circuitIsClosed = providedTrack.length < 3 || endpointDistance <= Math.min(rect.width, rect.height) * .06;
       context.lineJoin = 'round';
       context.lineCap = 'round';
       context.strokeStyle = '#292929';
       context.lineWidth = 18;
       context.beginPath();
       circuit.forEach(([x, y], index) => index === 0 ? context.moveTo(x, y) : context.lineTo(x, y));
-      context.closePath();
+      if (circuitIsClosed) context.closePath();
       context.stroke();
       context.strokeStyle = '#a8a8a8';
       context.lineWidth = 2;
       context.stroke();
 
+      const fallbackPoint = (progress: number) => {
+        const segmentProgress = Math.max(0, Math.min(progress, .999999)) * (circuit.length - 1);
+        const segment = Math.floor(segmentProgress);
+        const offset = segmentProgress - segment;
+        const start = circuit[segment];
+        const end = circuit[segment + 1];
+        return [start[0] + (end[0] - start[0]) * offset, start[1] + (end[1] - start[1]) * offset] as const;
+      };
+
       active.forEach((car) => {
-        const [x, y] = point(car.x, car.z);
+        const [x, y] = providedTrack.length >= 3
+          ? point(car.x, car.z)
+          : fallbackPoint(car.progress ?? 0);
         const radius = car.player ? 8 : 4;
         context.fillStyle = car.player ? '#ff1801' : teamColor(car.team);
         context.beginPath();

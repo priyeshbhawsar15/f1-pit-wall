@@ -31,7 +31,9 @@ export default function DashboardPage() {
   const mapCars = store.motion.map((car) => {
     const driver = store.drivers.find((item) => item.i === car.i);
     const lap = store.lapData.find((item) => item.i === car.i);
-    return { ...car, name: driver?.name || `Car ${car.i + 1}`, team: driver?.team, position: lap?.pos, player: humanDrivers.some((human) => human.i === car.i) };
+    const trackLength = store.session?.trackLength ?? 0;
+    const progress = trackLength > 0 ? Math.max(0, Math.min(lap?.dist ?? 0, trackLength)) / trackLength : 0;
+    return { ...car, name: driver?.name || `Car ${car.i + 1}`, team: driver?.team, position: lap?.pos, progress, player: humanDrivers.some((human) => human.i === car.i) };
   });
 
   const battleGap = playerCards.length === 2 && playerCards[0].lap && playerCards[1].lap
