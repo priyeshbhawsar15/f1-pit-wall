@@ -54,7 +54,7 @@ export default function DashboardPage() {
             return <article className="competitor-lane" key={driver.i}>
               <div className="competitor-position"><span>P</span><strong>{lap?.pos || '—'}</strong></div>
               <div className="competitor-name"><span>{index === 0 ? 'Player one' : 'Player two'}</span><h2>{driver.name}</h2><small>{teamName(driver.team)} · #{driver.num}</small></div>
-              <div className="competitor-primary"><Stat label="Last lap" value={formatLapTime(lap?.lastLap)} /><Stat label="Gap to leader" value={formatGap(lap?.dLeader)} accent={index === 0 ? 'var(--lime)' : 'var(--blue)'} /></div>
+              <div className="competitor-primary"><Stat label="Last lap" value={formatLapTime(lap?.lastLap)} /><Stat label="Gap to leader" value={formatGap(lap?.dLeader)} accent={index === 0 ? 'var(--race-red)' : 'var(--ink)'} /></div>
               <div className="competitor-strip"><span><i style={{ background: tyre.color }} />{tyre.name} · {status?.tyreAge ?? '—'}L</span><span>{telemetry?.spd ?? '—'} km/h</span>{aero?.is26 === 1 && <span>{aero.otActive ? 'Overtake active' : aero.aeroMode ? 'Straight aero' : 'Corner aero'}</span>}</div>
             </article>;
           }) : <div className="duel-placeholder"><div><span>Player one</span><strong>Waiting for participants</strong></div><div className="duel-versus"><b>VS</b><span>socket connected</span></div><div><span>Player two</span><strong>Start an on-track session</strong></div></div>}

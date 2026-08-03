@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Maximize2, Route } from 'lucide-react';
+import { Route } from 'lucide-react';
 import { teamColor } from '@/lib/presentation';
 
 export interface MapCar {
@@ -70,25 +70,25 @@ export function TrackStage({
       const circuit = providedTrack.length >= 3 ? providedTrack.map((trackPoint) => point(trackPoint.x, trackPoint.z)) : track;
       context.lineJoin = 'round';
       context.lineCap = 'round';
-      context.strokeStyle = '#253944';
+      context.strokeStyle = '#292929';
       context.lineWidth = 18;
       context.beginPath();
       circuit.forEach(([x, y], index) => index === 0 ? context.moveTo(x, y) : context.lineTo(x, y));
       context.closePath();
       context.stroke();
-      context.strokeStyle = '#70808a';
+      context.strokeStyle = '#a8a8a8';
       context.lineWidth = 2;
       context.stroke();
 
       active.forEach((car) => {
         const [x, y] = point(car.x, car.z);
         const radius = car.player ? 8 : 4;
-        context.fillStyle = car.player ? '#c8ff3d' : teamColor(car.team);
+        context.fillStyle = car.player ? '#ff1801' : teamColor(car.team);
         context.beginPath();
         context.arc(x, y, radius, 0, Math.PI * 2);
         context.fill();
         if (car.player) {
-          context.strokeStyle = '#081016';
+          context.strokeStyle = '#ffffff';
           context.lineWidth = 3;
           context.stroke();
         }
@@ -104,8 +104,7 @@ export function TrackStage({
   return (
     <div className="track-stage">
       <div className="track-stage-label"><Route aria-hidden="true" /><span>{label}</span></div>
-      <canvas ref={canvasRef} aria-label={`${label}. ${cars.length} cars are plotted; player cars use lime markers.`} />
-      <button className="map-control" aria-label="Fit track to view" type="button"><Maximize2 aria-hidden="true" /></button>
+      <canvas ref={canvasRef} aria-label={`${label}. ${cars.length} cars are plotted; player cars use red markers with white outlines.`} />
       <div className="map-key"><span><i className="player-dot" />Players</span><span><i />Field</span></div>
     </div>
   );

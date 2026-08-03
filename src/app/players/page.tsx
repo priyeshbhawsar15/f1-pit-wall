@@ -8,9 +8,9 @@ import { requestJson, useResource } from '@/hooks/useResource';
 import type { HumanProfile } from '@/lib/frontend-types';
 
 const colors = [
-  { name: 'Paddock lime', value: '#c8ff3d' },
-  { name: 'Signal coral', value: '#ff4f45' },
-  { name: 'Electric blue', value: '#32b6ff' },
+  { name: 'Race red', value: '#ff1801' },
+  { name: 'Signal blue', value: '#5ab8ff' },
+  { name: 'Timing yellow', value: '#ffcc33' },
   { name: 'Caution amber', value: '#ffca4b' },
   { name: 'Race green', value: '#4ee28a' },
   { name: 'Magenta', value: '#ff7ac8' },

@@ -1,69 +1,36 @@
 ---
-name: F1 Head-to-Head Telemetry
-description: A calm live broadcast surface for understanding a two-player race.
+name: Pit Wall Race Broadcast
+summary: An original red, black, and white race-broadcast system for live two-player telemetry.
 colors:
-  canvas: "#090a0c"
-  canvas-secondary: "#0f1115"
-  surface: "#14171c"
-  surface-soft: "#101217"
-  surface-elevated: "#20242b"
+  canvas: "#080808"
+  canvas-secondary: "#101010"
+  surface: "#171717"
+  surface-soft: "#111111"
+  surface-elevated: "#202020"
   ink: "#ffffff"
-  contrast-ink: "#000000"
-  ink-secondary: "#e2e5e9"
-  body: "#c1c6ce"
-  muted: "#969da8"
-  hairline: "#30343c"
-  hairline-soft: "#242830"
-  race-blue: "#1c69d4"
-  race-red: "#e22718"
-  success: "#0fa336"
-  warning: "#f4b400"
+  ink-secondary: "#d6d6d6"
+  muted: "#969696"
+  hairline: "#303030"
+  hairline-strong: "#484848"
+  race-red: "#ff1801"
+  race-red-deep: "#b81200"
+  success: "#2ecc71"
+  warning: "#ffcc33"
+  info: "#5ab8ff"
 typography:
   display:
-    fontFamily: "Satoshi, Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: "40px"
-    fontWeight: 700
-    lineHeight: 1
-    letterSpacing: "-0.02em"
-  display-compact:
-    fontFamily: "Satoshi, Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: "36px"
-    fontWeight: 700
-    lineHeight: 1
-    letterSpacing: "-0.02em"
-  display-mobile:
-    fontFamily: "Satoshi, Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: "34px"
-    fontWeight: 700
-    lineHeight: 1
-    letterSpacing: "-0.02em"
-  headline:
-    fontFamily: "Satoshi, Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: "16px"
-    fontWeight: 700
-    lineHeight: 1.25
-    letterSpacing: "-0.01em"
-  title:
-    fontFamily: "Satoshi, Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: "12px"
-    fontWeight: 700
-    lineHeight: 1.3
-    letterSpacing: "-0.01em"
+    fontFamily: "Arial Narrow, Roboto Condensed, Helvetica Neue, sans-serif"
+    fontWeight: 900
+    fontStyle: italic
+    lineHeight: 0.92
+    letterSpacing: "-0.035em"
   body:
-    fontFamily: "Satoshi, Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: "13px"
+    fontFamily: "Aptos, Segoe UI Variable, Segoe UI, sans-serif"
     fontWeight: 400
-    lineHeight: 1.45
-  label:
-    fontFamily: "Satoshi, Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: "11px"
-    fontWeight: 500
-    lineHeight: 1.3
-  micro:
-    fontFamily: "Satoshi, Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    fontSize: "10px"
-    fontWeight: 500
-    lineHeight: 1.3
+    lineHeight: 1.5
+  data:
+    fontFamily: "JetBrains Mono, Cascadia Mono, SFMono-Regular, Consolas, monospace"
+    fontVariantNumeric: tabular-nums
 rounded:
   sm: "6px"
   md: "10px"
@@ -72,149 +39,142 @@ rounded:
 spacing:
   xs: "4px"
   sm: "8px"
-  md: "10px"
-  lg: "16px"
-  xl: "18px"
+  md: "12px"
+  lg: "18px"
+  xl: "28px"
 components:
-  surface-card:
+  surface:
     backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
+    borderColor: "{colors.hairline}"
     rounded: "{rounded.lg}"
-    padding: "18px"
-  player-panel:
-    backgroundColor: "{colors.surface-soft}"
+  primary-action:
+    backgroundColor: "{colors.race-red}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: "18px"
-  status-pill:
-    backgroundColor: "{colors.surface-elevated}"
-    textColor: "{colors.ink-secondary}"
-    rounded: "{rounded.pill}"
-    padding: "2px 8px"
+    rounded: "{rounded.sm}"
+  active-navigation:
+    textColor: "{colors.ink}"
+    underlineColor: "{colors.race-red}"
 ---
 
-# Design System: F1 Head-to-Head Telemetry
+# Design System: Pit Wall Race Broadcast
 
-## 1. Overview
+## 1. Creative North Star
 
-**Creative North Star: "Head-to-Head Broadcast"**
+**Race Control, not cyber telemetry.** Pit Wall should feel like an original contemporary motorsport broadcast package: a near-black stage, crisp white information, disciplined red emphasis, bold speed-led typography, and compact timing graphics. It takes inspiration from the hierarchy and energy of current top-tier racing coverage without copying Formula 1 logos, fonts, imagery, or branded assets.
 
-This interface should feel like a modern race broadcast built around two competitors: immediate enough for spectators, precise enough for the players, and calm enough to scan throughout a full session. The two human players and the changing story between them are the primary visual layer. Whole-field standings, technical telemetry, and historical detail remain accessible as supporting layers.
+The product is normally used beside a racing game in a dim room. The dark canvas limits glare; white establishes the reading order; red marks product identity, selection, and primary action. The two human drivers and the race map remain the product-specific story. Technical evidence follows the broadcast layer rather than overwhelming it.
 
-The system uses a dark canvas because it is commonly viewed on a gaming display during a live session, where low glare and stable data colors matter. Minimalism comes from hierarchy, consolidation, and progressive disclosure—not from removing useful telemetry. It explicitly rejects an overcrowded engineering console, a flashy arcade HUD, and a generic admin template.
+**Key characteristics**
 
-**Key Characteristics:**
+- Near-black and graphite fields with clean white type
+- Race red as the single product accent
+- Bold condensed italic display treatment for speed and momentum
+- Tabular technical typography for measurements and timing
+- Fine horizontal rules and three-line race motifs
+- Polished rounded cards and controls throughout
+- State-driven, compositor-safe motion only
 
-- Two-player comparison before whole-field detail
-- Quiet tonal surfaces with restrained brand color
-- Broadcast-readable numbers and plain-language labels
-- Rounded but disciplined geometry
-- State-driven motion only
+## 2. Color System
 
-## 2. Colors
+### Product hierarchy
 
-The palette is a near-black broadcast canvas with cool charcoal layers; BMW M blue and red retain race identity while green and yellow communicate live state.
+- **Race Red** (`#ff1801`) is the primary accent for selected navigation, primary actions, key positions, active replay controls, and the original Pit Wall mark.
+- **White** (`#ffffff`) carries headlines, driver names, and the most important values.
+- **Canvas Black** (`#080808`) and **Graphite** (`#101010`–`#202020`) create layered broadcast surfaces.
+- **Cool Gray** (`#969696` / `#d6d6d6`) supports labels and explanatory copy.
 
-### Primary
+### Semantic signals
 
-- **Race Blue** (`#1c69d4`): focus, current selection, and the subtle head-to-head atmosphere.
-- **Race Red** (`#e22718`): the F1/BMW M signature, primary race emphasis, and severe states.
+Yellow, green, and blue are permitted only when their status meaning is necessary: caution or threshold, healthy/live, and informational telemetry. They never compete with red as product identity. State is always paired with text, shape, or icon so color is not the only cue.
 
-### Secondary
+### Discipline rules
 
-- **Success Green** (`#0fa336`): connected, ready, healthy, and positive telemetry states.
-- **Caution Yellow** (`#f4b400`): safety-car, pit, penalty, and threshold warnings.
-
-### Neutral
-
-- **Broadcast Canvas** (`#090a0c`): the page background.
-- **Quiet Surface** (`#101217`): local player and metric grouping.
-- **Telemetry Surface** (`#14171c`): primary panels.
-- **Raised State** (`#20242b`): active navigation, controls, and hover feedback.
-- **Primary Ink** (`#ffffff`): high-priority labels and values.
-- **Secondary Ink** (`#e2e5e9`): supporting values.
-- **Readable Muted** (`#969da8`): metadata and labels; do not reduce its contrast.
-
-**The Signal Color Rule.** Saturated colors communicate identity or live state. They do not decorate inactive panels.
+1. Red appears at decision points and hierarchy anchors, not around every card.
+2. Inactive panels are neutral.
+3. Driver/team colors may identify competitors in maps and profiles, but they do not recolor global chrome.
+4. No neon lime, ambient blue glow, multicolor cyber grid, or decorative gradient treatment.
 
 ## 3. Typography
 
-**Display Font:** Satoshi (with Inter and system sans fallbacks)
+### Display voice
 
-**Body Font:** Satoshi (with Inter and system sans fallbacks)
+Use a legally available condensed sans or the system fallback stack: `Arial Narrow`, `Roboto Condensed`, `Helvetica Neue`, sans-serif. Major page titles use 850–900 weight, a restrained italic treatment, tight but legible spacing, and a maximum scale of 68px desktop / 50px mobile. This creates momentum without imitating a proprietary Formula 1 typeface.
 
-**Label/Mono Font:** the system monospace stack for telemetry values
+### Interface voice
 
-**Character:** One contemporary sans family keeps the product familiar and calm. Weight, alignment, and tabular numerals create hierarchy without introducing a second display voice.
+Body, labels, and controls use a highly legible UI sans stack. Surface titles use the condensed display stack without italics for stable scanning. Metadata may use uppercase with modest tracking only at micro sizes.
 
-### Hierarchy
+### Data voice
 
-- **Headline** (700, 16px, 1.25): player names and the highest local headings.
-- **Telemetry display** (700, up to 40px, 1): speed, gear, and position only.
-- **Title** (700, 12px, 1.3): panel headings; sentence case by default.
-- **Body** (400, 13px, 1.45): explanation and secondary information.
-- **Label** (500, 11px, 1.3): metric names and navigation.
-- **Micro label** (500, 10px, 1.3): dense secondary telemetry where an 11px label does not fit.
-- **Telemetry value** (600–700, context-sized): use monospace and tabular numerals for times, gaps, temperatures, energy, and lap counts.
+Timing, gaps, positions, speeds, temperatures, lap counts, and points use a technical monospace stack with tabular numerals. Data columns align by decimal rhythm where possible.
 
-**The Broadcast Scan Rule.** A viewer should distinguish player, position, comparison, and state from typography alone before color is considered.
+**Broadcast scan rule:** a viewer must distinguish page, section, driver, position, and state from type scale and alignment before color is considered.
 
-## 4. Elevation
+## 4. Geometry, Dividers, and Depth
 
-The system is flat by default. Depth comes from tonal layering between canvas, quiet grouping, primary surfaces, and active states. Panels have one subtle hairline and no decorative box shadow. The header may use backdrop blur because it separates live navigation from scrolling telemetry, not as a general glass effect.
+Rounded geometry is a fixed product commitment:
 
-**The Tonal Depth Rule.** Use a neighboring surface token before adding a border, and use a border before considering any shadow.
+- 14px for primary cards and map stages
+- 10px for grouped controls and compact panels
+- 6px for buttons, inputs, and local control surfaces
+- Pills only for status chips
 
-## 5. Components
+F1 character comes from typography, horizontal racing lines, crisp dividers, compact data strips, and directional spacing—not clipped or chamfered corners. Panels use neighboring graphite tones and one neutral hairline. Shadows remain low, dark, and functional; no glow.
 
-### Buttons
+The three-sector motif is rendered as parallel red/gray bars. Page and panel headers use short red rules or top accents as broadcast cues while retaining rounded containers.
 
-- **Shape:** compact controls use a 6px radius; icon/text navigation uses a 6px radius; status actions may be pills.
-- **Primary:** race blue is reserved for focused or selected actions rather than filling every control.
-- **Hover / Focus:** use `#1a1e24` for hover and a visible race-blue border or focus ring for keyboard focus.
-- **Secondary / Ghost:** transparent at rest with muted text and tonal hover feedback.
-
-### Chips
-
-- **Style:** full-pill geometry with compact padding. Green, yellow, or red fills are reserved for meaningful status.
-- **State:** labels are short, stable, and readable without relying only on color.
-
-### Cards / Containers
-
-- **Corner Style:** 14px for primary panels; 10px for interactive groups; never exceed 16px.
-- **Background:** `#14171c` for panels and `#101217` for subordinate grouping.
-- **Shadow Strategy:** no decorative shadows.
-- **Border:** one `#242830` hairline on primary panels; avoid outlining every metric.
-- **Internal Padding:** 16–18px, reduced to 10px at narrow mobile widths when needed.
-
-### Inputs / Fields
-
-- **Style:** charcoal fill, one quiet hairline, 6px radius, 11–13px type.
-- **Focus:** race-blue border with an unambiguous keyboard-visible state.
-- **Error / Disabled:** use semantic color plus text or icon; never color alone.
+## 5. Component Language
 
 ### Navigation
 
-Primary destinations sit in a horizontally scrollable row on narrow screens and align to the right on desktop. The active destination uses a quiet elevated fill; dashboard views use a restrained red underline. Labels stay in title case rather than aggressive tracked uppercase.
+The header is black and compact. The original Pit Wall mark is a red rounded tile with an original gauge icon. Active destinations use white text and a red baseline. Mobile navigation retains labels and safe-area padding; the active icon and label are red/white with a red top cue.
 
-### Head-to-Head Player Panel
+### Page introductions
 
-Each player panel is directly selectable and exposes four primary comparisons—interval, last lap, tyres, and race state—followed by compact secondary telemetry. Selecting a player reveals technical panels below rather than showing every detail at all times.
+Large condensed italic titles establish the race or archive context. Supporting copy stays quiet and readable. Metadata chips follow immediately below. The three-line race motif terminates the divider on the right.
 
-## 6. Do's and Don'ts
+### Cards and data panels
 
-### Do:
+Primary cards use graphite surfaces, white headings, gray captions, and fine neutral dividers. A short red header rule may signal section hierarchy. Tables and ledgers prioritize rank, identity, and result; hover states use a small neutral lift or restrained red tint rather than bright fill.
 
-- **Do** place the two human players and their changing competitive relationship before whole-field detail.
-- **Do** retain useful telemetry through progressive disclosure and compact secondary rows.
-- **Do** use 6px, 10px, and 14px radii consistently.
-- **Do** use semantic colors for live states and pair those colors with text.
-- **Do** keep motion between 150–250ms, tied to selection, status, or live value changes, with reduced-motion support.
+### Buttons and controls
 
-### Don't:
+Primary buttons are race red with white text. Quiet buttons use raised graphite. Hover and active feedback is under 200ms and limited to transform, opacity, or small local color changes. Focus uses a high-contrast red/white ring. Destructive actions use a darker red treatment and explicit labels or accessible names.
 
-- **Don't** recreate an overcrowded engineering console or a generic admin template.
-- **Don't** box every metric, nest cards, or use separators where spacing and alignment are enough.
-- **Don't** use arcade-style glow, decorative glass, gradient text, or animated ornament.
-- **Don't** use colored side-stripe borders on rows or panels.
-- **Don't** hide useful race information in pursuit of information-light minimalism.
+### Replay
+
+The map remains the dominant upper-viewport element. Controls sit on an opaque near-black rounded rail within the map. Play, active speed, and selected moments use red; timeline and measurements remain neutral. Player-focused statistics stay immediately below the map.
+
+### Maps and telemetry
+
+Track asphalt is neutral charcoal with a light gray racing line. Human drivers use white and red markers with dark outlines; the field may retain team colors when meaningful. Map backgrounds use a very subtle orthogonal timing grid, not a checkerboard or neon grid.
+
+## 6. Responsive and Accessibility Rules
+
+- Maintain 44px minimum touch targets for primary mobile controls.
+- Preserve visible keyboard focus and logical tab order.
+- Body text and muted metadata must retain readable contrast on every surface.
+- Tables and dense ledgers may scroll locally; the page itself must never overflow horizontally.
+- Headings balance and body copy wraps naturally at every supported width.
+- Reduced-motion mode removes nonessential transitions and animations.
+- Canvas labels and controls retain accessible names; visual map meaning is summarized in text.
+
+## 7. Do / Don’t
+
+### Do
+
+- Keep the two-player battle and dominant race map central.
+- Use red, white, and graphite consistently across every route.
+- Use condensed italic display typography selectively for page-level energy.
+- Align timing and telemetry with tabular numerals.
+- Preserve rounded corners across cards, controls, and containers.
+- Let spacing and dividers create broadcast rhythm.
+
+### Don’t
+
+- Don’t copy or bundle Formula 1 logos, proprietary fonts, photography, or other protected brand assets.
+- Don’t return to lime/electric-blue cyber styling as the dominant identity.
+- Don’t use chamfered, clipped, or aggressively angular card geometry.
+- Don’t decorate inactive surfaces with semantic colors.
+- Don’t add glow, glass, gradient text, or animated ornament.
+- Don’t shrink or demote the replay map to make room for statistics.
