@@ -488,7 +488,8 @@ meter { width: 100%; height: 8px; accent-color: var(--race-red); }
   .setup-grid article { grid-template-columns: 1fr 1fr; padding: 18px 14px; }
   .replay-theater { height: min(78dvh, 660px); min-height: 540px; }
   .replay-theater .track-stage { height: 100%; min-height: 0; }
-  .replay-theater .map-key { bottom: 188px; }
+  .replay-theater .map-key { bottom: 348px; }
+  .replay-theater .replay-controls { bottom: 178px; }
   .replay-overlay-top { top: 58px; width: calc(100% - 28px); }
   .replay-overlay-top > div { flex: 1; min-width: 0; }
   .replay-controls { grid-template-columns: repeat(4, minmax(44px, auto)) 1fr; }
