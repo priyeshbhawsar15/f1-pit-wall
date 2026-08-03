@@ -55,7 +55,26 @@ export default function ReplayPage() {
 
   useEffect(() => { void loadReplay(); }, [loadReplay]);
 
-  const frameTimes = useMemo(() => Array.from(new Set(motion.map((row) => row.time))), [motion]);
+  const motionByTime = useMemo(() => {
+    const index = new Map<string, ReplayMotion[]>();
+    motion.forEach((row) => {
+      const frame = index.get(row.time);
+      if (frame) frame.push(row);
+      else index.set(row.time, [row]);
+    });
+    return index;
+  }, [motion]);
+  const frameTimes = useMemo(() => Array.from(motionByTime.keys()), [motionByTime]);
+  const lapDataByCar = useMemo(() => {
+    const index = new Map<number, ReplayResponse['lapData']>();
+    lapData.forEach((row) => {
+      const laps = index.get(row.car_index);
+      if (laps) laps.push(row);
+      else index.set(row.car_index, [row]);
+    });
+    index.forEach((laps) => laps.sort((left, right) => left.time.localeCompare(right.time)));
+    return index;
+  }, [lapData]);
   const participantList = moments.data?.participants || session?.participants || [];
   const humanParticipants = participantList.filter((item) => item.humanProfile || item.aiControlled === false).slice(0, 2);
   const primaryCarIndex = humanParticipants[0]?.carIndex ?? motion[0]?.car_index;
@@ -82,12 +101,33 @@ export default function ReplayPage() {
   }, [frameTimes.length, playing, speed]);
 
   const currentTime = frameTimes[frameIndex];
-  const cars = useMemo(() => motion.filter((row) => row.time === currentTime).map((row) => {
-    const participant = session?.participants.find((item) => item.carIndex === row.car_index) || moments.data?.participants.find((item) => item.carIndex === row.car_index);
-    const lap = [...lapData].reverse().find((item) => item.car_index === row.car_index && item.time <= row.time);
+  const participantByCar = useMemo(() => {
+    const index = new Map<number, SessionRow['participants'][number]>();
+    session?.participants.forEach((participant) => index.set(participant.carIndex, participant));
+    moments.data?.participants.forEach((participant) => {
+      if (!index.has(participant.carIndex)) index.set(participant.carIndex, participant);
+    });
+    return index;
+  }, [moments.data?.participants, session?.participants]);
+  const findLap = useCallback((carIndex: number, time?: string) => {
+    const laps = lapDataByCar.get(carIndex);
+    if (!laps?.length || !time) return undefined;
+    let low = 0;
+    let high = laps.length - 1;
+    let match = -1;
+    while (low <= high) {
+      const middle = Math.floor((low + high) / 2);
+      if (laps[middle].time <= time) { match = middle; low = middle + 1; }
+      else high = middle - 1;
+    }
+    return match >= 0 ? laps[match] : undefined;
+  }, [lapDataByCar]);
+  const cars = useMemo(() => (motionByTime.get(currentTime) || []).map((row) => {
+    const participant = participantByCar.get(row.car_index);
+    const lap = findLap(row.car_index, row.time);
     return { i: row.car_index, x: row.world_position_x, z: row.world_position_z, name: participant?.humanProfile?.name || participant?.name || `Car ${row.car_index + 1}`, team: participant?.teamId, position: lap?.car_position, player: Boolean(participant?.humanProfile || participant?.aiControlled === false) };
-  }), [currentTime, lapData, moments.data?.participants, motion, session?.participants]);
-  const frameLaps = humanParticipants.map((participant) => [...lapData].reverse().find((item) => item.car_index === participant.carIndex && (!currentTime || item.time <= currentTime)));
+  }), [currentTime, findLap, motionByTime, participantByCar]);
+  const frameLaps = humanParticipants.map((participant) => findLap(participant.carIndex, currentTime));
   const humanGap = frameLaps.length === 2 && frameLaps[0] && frameLaps[1]
     ? Math.abs(frameLaps[0].delta_to_race_leader_ms - frameLaps[1].delta_to_race_leader_ms)
     : null;
