@@ -2,480 +2,161 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { TRACK_NAMES, SESSION_TYPES, TEAM_COLORS } from '@/lib/constants';
-import { motion } from 'framer-motion';
-import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
-import RaceMomentsTimeline from '@/components/RaceMomentsTimeline';
-import AppHeader from '@/components/AppHeader';
+import { Gauge, Pause, Play, RotateCcw, SkipBack, SkipForward, Timer } from 'lucide-react';
+import { TrackStage } from '@/components/TrackStage';
+import { Avatar, EmptyState, ErrorState, LoadingState, PageIntro, Stat, StatusPill, Surface } from '@/components/UI';
+import { requestJson, useResource } from '@/hooks/useResource';
+import type { HumanProfile, ReplayMotion, ReplayResponse, SessionEvent, SessionRow } from '@/lib/frontend-types';
+import { cn, eventName, formatGap, formatLapTime, sessionName, trackName } from '@/lib/presentation';
 
-const BMW_FONT = { fontFamily: "var(--font-ui)" };
-const REPLAY_FRAME_CHUNK_SIZE = 400;
+const PAGE_SIZE = 400;
 
-interface MotionFrame {
-  time: string;
-  car_index: number;
-  world_position_x: number;
-  world_position_z: number;
-}
-
-interface ReplayData {
-  motion: MotionFrame[];
-  lapData: any[];
-  carStatus: any[];
-  telemetry: any[];
-}
-
-interface ReplayResponse extends ReplayData {
-  nextCursor: string | null;
-  hasMore: boolean;
-}
-
-interface SessionData {
-  id: string;
-  trackId: number;
-  sessionType: number;
-  totalLaps: number;
-  participants: { name: string; teamId: number; carIndex: number; aiControlled: boolean; humanProfileId: string | null }[];
-}
-
-interface HumanProfile {
-  id: string;
-  name: string;
-  color: string;
-  avatarUrl: string | null;
-}
-
-export default function SessionReplayPage() {
-  const params = useParams();
+export default function ReplayPage() {
+  const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
-  const sessionId = params.id as string;
-  const sessionUID = searchParams.get('uid') || '';
-
-  const [session, setSession] = useState<SessionData | null>(null);
-  const [replayData, setReplayData] = useState<ReplayData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const sessions = useResource<SessionRow[]>('/api/sessions', []);
+  const profiles = useResource<HumanProfile[]>('/api/players', []);
+  const moments = useResource<{ events: SessionEvent[]; participants: SessionRow['participants']; sessionCreatedAt: string }>(`/api/sessions/${id}/events`);
+  const session = sessions.data?.find((item) => item.id === id) || null;
+  const sessionUID = searchParams.get('uid') || session?.sessionUID || '';
+  const [motion, setMotion] = useState<ReplayMotion[]>([]);
+  const [lapData, setLapData] = useState<ReplayResponse['lapData']>([]);
+  const [loadingReplay, setLoadingReplay] = useState(false);
+  const [replayError, setReplayError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [currentTimeIdx, setCurrentTimeIdx] = useState(0);
-  const [profiles, setProfiles] = useState<HumanProfile[]>([]);
-  const [assigning, setAssigning] = useState<Record<number, boolean>>({});
+  const [speed, setSpeed] = useState(1);
+  const [frameIndex, setFrameIndex] = useState(0);
+  const lastTick = useRef(0);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>(0);
-  const lastFrameTime = useRef<number>(0);
-
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/sessions').then((r) => r.json()),
-      fetch('/api/players').then((r) => r.json()),
-    ]).then(([sessions, profs]) => {
-      const s = sessions.find((s: any) => s.id === sessionId);
-      if (s) setSession(s);
-      if (Array.isArray(profs)) setProfiles(profs);
-    });
-  }, [sessionId]);
-
-  async function assignProfile(carIndex: number, humanProfileId: string | null) {
-    setAssigning((prev) => ({ ...prev, [carIndex]: true }));
-    await fetch(`/api/sessions/${sessionId}/assign`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ carIndex, humanProfileId }),
-    });
-    setSession((prev) => prev ? {
-      ...prev,
-      participants: prev.participants.map((p) =>
-        p.carIndex === carIndex ? { ...p, humanProfileId } : p
-      ),
-    } : prev);
-    setAssigning((prev) => ({ ...prev, [carIndex]: false }));
-  }
-
-  useEffect(() => {
+  const loadReplay = useCallback(async () => {
     if (!sessionUID) return;
-
-    let cancelled = false;
-
-    async function loadReplay() {
-      setLoading(true);
-      setReplayData(null);
-      setPlaying(false);
-      setCurrentTimeIdx(0);
-      lastFrameTime.current = 0;
-
-      const aggregated: ReplayData = {
-        motion: [],
-        lapData: [],
-        carStatus: [],
-        telemetry: [],
-      };
-
-      try {
-        let cursor: string | null = null;
-        let hasMore = true;
-
-        while (hasMore) {
-          const params = new URLSearchParams({
-            sessionUID,
-            limitFrames: String(REPLAY_FRAME_CHUNK_SIZE),
-          });
-
-          if (cursor) {
-            params.set('cursor', cursor);
-          }
-
-          const response = await fetch(`/api/replay?${params.toString()}`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch replay data');
-          }
-
-          const chunk: ReplayResponse = await response.json();
-          aggregated.motion.push(...chunk.motion);
-          aggregated.lapData.push(...chunk.lapData);
-          aggregated.carStatus.push(...chunk.carStatus);
-          aggregated.telemetry.push(...chunk.telemetry);
-
-          cursor = chunk.nextCursor;
-          hasMore = chunk.hasMore && Boolean(chunk.nextCursor);
-        }
-
-        if (!cancelled) {
-          setReplayData(aggregated);
-        }
-      } catch {
-        if (!cancelled) {
-          setReplayData(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+    setLoadingReplay(true); setReplayError(null);
+    try {
+      let cursor: string | null = null;
+      let allMotion: ReplayMotion[] = [];
+      let allLaps: ReplayResponse['lapData'] = [];
+      let more = true;
+      let pages = 0;
+      while (more && pages < 5) {
+        const query = new URLSearchParams({ sessionUID, limitFrames: String(PAGE_SIZE) });
+        if (cursor) query.set('cursor', cursor);
+        const page: ReplayResponse = await requestJson(`/api/replay?${query}`);
+        allMotion = allMotion.concat(page.motion);
+        allLaps = allLaps.concat(page.lapData);
+        cursor = page.nextCursor;
+        more = page.hasMore;
+        pages++;
       }
-    }
-
-    loadReplay();
-
-    return () => {
-      cancelled = true;
-    };
+      setMotion(allMotion); setLapData(allLaps); setHasMore(more); setFrameIndex(0);
+    } catch (caught) { setReplayError(caught instanceof Error ? caught.message : 'Replay could not be loaded'); }
+    finally { setLoadingReplay(false); }
   }, [sessionUID]);
 
-  const timestamps = useMemo(
-    () => (replayData ? Array.from(new Set(replayData.motion.map((m) => m.time))).sort() : []),
-    [replayData]
-  );
+  useEffect(() => { void loadReplay(); }, [loadReplay]);
 
   const motionByTime = useMemo(() => {
-    const grouped = new Map<string, MotionFrame[]>();
-
-    for (const frame of replayData?.motion ?? []) {
-      const existing = grouped.get(frame.time);
-      if (existing) {
-        existing.push(frame);
-      } else {
-        grouped.set(frame.time, [frame]);
-      }
-    }
-
-    return grouped;
-  }, [replayData]);
-
-  const carTrails = useMemo(() => {
-    const trails = new Map<number, MotionFrame[]>();
-
-    for (const frame of replayData?.motion ?? []) {
-      if (!trails.has(frame.car_index)) {
-        trails.set(frame.car_index, []);
-      }
-      trails.get(frame.car_index)!.push(frame);
-    }
-
-    return trails;
-  }, [replayData]);
-
-  const trackBounds = useMemo(() => {
-    if (!replayData || replayData.motion.length === 0) return null;
-
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minZ = Infinity;
-    let maxZ = -Infinity;
-
-    for (const frame of replayData.motion) {
-      if (frame.world_position_x < minX) minX = frame.world_position_x;
-      if (frame.world_position_x > maxX) maxX = frame.world_position_x;
-      if (frame.world_position_z < minZ) minZ = frame.world_position_z;
-      if (frame.world_position_z > maxZ) maxZ = frame.world_position_z;
-    }
-
-    return { minX, maxX, minZ, maxZ };
-  }, [replayData]);
-
-  const totalFrames = timestamps.length;
-
-  useEffect(() => {
-    setCurrentTimeIdx((prev) => Math.min(prev, Math.max(0, timestamps.length - 1)));
-  }, [timestamps.length]);
-
-  const drawFrame = useCallback((frameIdx: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas || !replayData || timestamps.length === 0 || !trackBounds) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const W = 500;
-    ctx.clearRect(0, 0, W, W);
-
-    const currentTime = timestamps[frameIdx];
-    const frameCars = motionByTime.get(currentTime) ?? [];
-    if (frameCars.length === 0) return;
-
-    const { minX, maxX, minZ, maxZ } = trackBounds;
-
-    const rangeX = maxX - minX || 1;
-    const rangeZ = maxZ - minZ || 1;
-    const pad = 40;
-    const drawSize = W - pad * 2;
-    const scale = Math.min(drawSize / rangeX, drawSize / rangeZ);
-    const mapX = (x: number) => pad + (x - minX) * scale + (drawSize - rangeX * scale) / 2;
-    const mapZ = (z: number) => pad + (z - minZ) * scale + (drawSize - rangeZ * scale) / 2;
-
-    carTrails.forEach((trail) => {
-      if (trail.length < 2) return;
-      ctx.beginPath();
-      ctx.moveTo(mapX(trail[0].world_position_x), mapZ(trail[0].world_position_z));
-      for (let i = 1; i < trail.length; i++) {
-        ctx.lineTo(mapX(trail[i].world_position_x), mapZ(trail[i].world_position_z));
-      }
-      ctx.strokeStyle = '#ffffff10';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+    const index = new Map<string, ReplayMotion[]>();
+    motion.forEach((row) => {
+      const frame = index.get(row.time);
+      if (frame) frame.push(row);
+      else index.set(row.time, [row]);
     });
-
-    for (const car of frameCars) {
-      const participant = session?.participants.find((p) => p.carIndex === car.car_index);
-      const color = participant ? (TEAM_COLORS[participant.teamId] || '#666') : '#666';
-      const cx = mapX(car.world_position_x);
-      const cz = mapZ(car.world_position_z);
-
-      ctx.beginPath();
-      ctx.arc(cx, cz, 5, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-
-      if (participant) {
-        ctx.fillStyle = '#fff';
-        ctx.font = '9px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(participant.name.split(' ').pop() || '', cx, cz - 10);
-      }
-    }
-
-    ctx.fillStyle = '#555';
-    ctx.font = '11px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Frame ${frameIdx + 1}/${totalFrames}`, 10, W - 10);
-  }, [carTrails, motionByTime, replayData, session, timestamps, totalFrames, trackBounds]);
-
+    return index;
+  }, [motion]);
+  const frameTimes = useMemo(() => Array.from(motionByTime.keys()), [motionByTime]);
+  const lapDataByCar = useMemo(() => {
+    const index = new Map<number, ReplayResponse['lapData']>();
+    lapData.forEach((row) => {
+      const laps = index.get(row.car_index);
+      if (laps) laps.push(row);
+      else index.set(row.car_index, [row]);
+    });
+    index.forEach((laps) => laps.sort((left, right) => left.time.localeCompare(right.time)));
+    return index;
+  }, [lapData]);
+  const participantList = moments.data?.participants || session?.participants || [];
+  const humanParticipants = participantList.filter((item) => item.humanProfile || item.aiControlled === false).slice(0, 2);
+  const primaryCarIndex = humanParticipants[0]?.carIndex ?? motion[0]?.car_index;
+  const trackPoints = useMemo(() => {
+    if (primaryCarIndex === undefined) return [];
+    const points = motion.filter((row) => row.car_index === primaryCarIndex);
+    const step = Math.max(1, Math.floor(points.length / 280));
+    return points.filter((_, index) => index % step === 0).map((row) => ({ x: row.world_position_x, z: row.world_position_z }));
+  }, [motion, primaryCarIndex]);
   useEffect(() => {
-    if (!playing || !replayData || timestamps.length === 0) return;
-
-    const step = (time: number) => {
-      if (!lastFrameTime.current) lastFrameTime.current = time;
-      const delta = time - lastFrameTime.current;
-
-      if (delta > (1000 / 30) / playbackSpeed) {
-        lastFrameTime.current = time;
-        setCurrentTimeIdx((prev) => {
-          const next = prev + 1;
-          if (next >= timestamps.length) {
-            setPlaying(false);
-            return prev;
-          }
-          return next;
-        });
+    if (!playing || frameTimes.length < 2) return;
+    let request = 0;
+    const tick = (time: number) => {
+      if (!lastTick.current) lastTick.current = time;
+      const interval = 100 / speed;
+      if (time - lastTick.current >= interval) {
+        setFrameIndex((current) => current >= frameTimes.length - 1 ? 0 : current + 1);
+        lastTick.current = time;
       }
-
-      animRef.current = requestAnimationFrame(step);
+      request = requestAnimationFrame(tick);
     };
+    request = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(request); lastTick.current = 0; };
+  }, [frameTimes.length, playing, speed]);
 
-    animRef.current = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animRef.current);
-  }, [playing, playbackSpeed, replayData, timestamps]);
+  const currentTime = frameTimes[frameIndex];
+  const participantByCar = useMemo(() => {
+    const index = new Map<number, SessionRow['participants'][number]>();
+    session?.participants.forEach((participant) => index.set(participant.carIndex, participant));
+    moments.data?.participants.forEach((participant) => {
+      if (!index.has(participant.carIndex)) index.set(participant.carIndex, participant);
+    });
+    return index;
+  }, [moments.data?.participants, session?.participants]);
+  const findLap = useCallback((carIndex: number, time?: string) => {
+    const laps = lapDataByCar.get(carIndex);
+    if (!laps?.length || !time) return undefined;
+    let low = 0;
+    let high = laps.length - 1;
+    let match = -1;
+    while (low <= high) {
+      const middle = Math.floor((low + high) / 2);
+      if (laps[middle].time <= time) { match = middle; low = middle + 1; }
+      else high = middle - 1;
+    }
+    return match >= 0 ? laps[match] : undefined;
+  }, [lapDataByCar]);
+  const cars = useMemo(() => (motionByTime.get(currentTime) || []).map((row) => {
+    const participant = participantByCar.get(row.car_index);
+    const lap = findLap(row.car_index, row.time);
+    return { i: row.car_index, x: row.world_position_x, z: row.world_position_z, name: participant?.humanProfile?.name || participant?.name || `Car ${row.car_index + 1}`, team: participant?.teamId, position: lap?.car_position, player: Boolean(participant?.humanProfile || participant?.aiControlled === false) };
+  }), [currentTime, findLap, motionByTime, participantByCar]);
+  const frameLaps = humanParticipants.map((participant) => findLap(participant.carIndex, currentTime));
+  const humanGap = frameLaps.length === 2 && frameLaps[0] && frameLaps[1]
+    ? Math.abs(frameLaps[0].delta_to_race_leader_ms - frameLaps[1].delta_to_race_leader_ms)
+    : null;
 
-  useEffect(() => {
-    drawFrame(currentTimeIdx);
-  }, [currentTimeIdx, drawFrame]);
+  async function assign(carIndex: number, humanProfileId: string | null) {
+    await requestJson(`/api/sessions/${id}/assign`, { method: 'PATCH', body: JSON.stringify({ carIndex, humanProfileId }) });
+    await moments.reload(); await sessions.reload();
+  }
 
-  const trackName = session ? (TRACK_NAMES[session.trackId] || 'Unknown') : '---';
-  const sessionType = session ? (SESSION_TYPES[session.sessionType] || '---') : '---';
-  const progressPct = totalFrames > 1 ? ((currentTimeIdx / (totalFrames - 1)) * 100) : 0;
-  const sortedParticipants = session
-    ? [...session.participants].sort((a, b) => {
-        const aLinked = Boolean(a.humanProfileId);
-        const bLinked = Boolean(b.humanProfileId);
-        if (aLinked !== bLinked) return aLinked ? -1 : 1;
-        if (a.aiControlled !== b.aiControlled) return a.aiControlled ? 1 : -1;
-        return a.carIndex - b.carIndex;
-      })
-    : [];
+  const initialLoading = sessions.loading || moments.loading || loadingReplay;
+  if (initialLoading && !session && motion.length === 0) return <div className="page-shell"><LoadingState label="Loading race replay" /></div>;
 
-  return (
-    <div className="min-h-screen">
-      <AppHeader
-        title="REPLAY"
-        backHref="/sessions"
-        meta={
-          <>
-            <span className="font-bold text-[var(--foreground)]" style={BMW_FONT}>{trackName}</span>
-            <span className="text-[var(--muted)] text-[11px] uppercase tracking-wider">{sessionType}</span>
-          </>
-        }
-      />
+  return <div className="page-shell page-shell-wide replay-page">
+    <PageIntro title={session ? trackName(session.trackId) : 'Race Replay'} description={session ? `${sessionName(session.sessionType)} · ${session.totalLaps || '—'} laps. The map owns the viewport; the driver evidence follows below.` : 'Historical motion, event markers, and driver context on one race stage.'} backHref="/sessions" meta={<><StatusPill tone={motion.length ? 'live' : 'warning'}>{motion.length ? `${frameTimes.length} frames loaded` : 'No motion loaded'}</StatusPill>{hasMore && <StatusPill tone="blue">Previewing first 2,000 frames</StatusPill>}</>} />
 
-      <div className="max-w-6xl mx-auto p-6">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin mb-3" />
-            <span className="text-sm text-[var(--muted-foreground)]">Loading replay data…</span>
-          </div>
-        ) : !replayData || timestamps.length === 0 ? (
-          <div className="card p-12 text-center">
-            <Play size={32} className="text-[var(--muted)] mx-auto mb-3" />
-            <h3 className="text-lg font-semibold mb-1">No replay data</h3>
-            <p className="text-sm text-[var(--muted-foreground)]">Motion data is not available for this session.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-12 gap-4">
-            {/* Track canvas */}
-            <div className="col-span-8">
-              <div className="card">
-                <div className="card-header">
-                  <span className="card-title">Track View</span>
-                  <span className="text-[10px] font-mono text-[var(--muted)]">{currentTimeIdx + 1} / {totalFrames}</span>
-                </div>
-                <div className="flex items-center justify-center p-3">
-                  <canvas ref={canvasRef} width={500} height={500} className="w-full max-w-[500px] aspect-square" />
-                </div>
-              </div>
-            </div>
+    {replayError ? <ErrorState message={replayError} onRetry={loadReplay} /> : motion.length ? <>
+      <section className="replay-theater">
+        <TrackStage cars={cars} trackPoints={trackPoints} label="Historical race position" />
+        <div className="replay-overlay-top">{humanParticipants.map((participant, index) => { const lap = frameLaps[index]; return <div key={participant.carIndex}><Avatar name={participant.humanProfile?.name || participant.name} color={participant.humanProfile?.color} src={participant.humanProfile?.avatarUrl} size="sm" /><span><strong>{participant.humanProfile?.name || participant.name}</strong><small>P{lap?.car_position || '—'} · L{lap?.current_lap_num || '—'} · {formatGap(lap?.delta_to_race_leader_ms)}</small></span></div>; })}</div>
+        <div className="replay-controls"><button aria-label="Restart replay" onClick={() => setFrameIndex(0)}><RotateCcw /></button><button aria-label="Previous frame" onClick={() => setFrameIndex(Math.max(0, frameIndex - 1))}><SkipBack /></button><button className="play-button" aria-label={playing ? 'Pause replay' : 'Play replay'} onClick={() => setPlaying(!playing)}>{playing ? <Pause /> : <Play />}</button><button aria-label="Next frame" onClick={() => setFrameIndex(Math.min(frameTimes.length - 1, frameIndex + 1))}><SkipForward /></button><input aria-label="Replay timeline" type="range" min="0" max={Math.max(0, frameTimes.length - 1)} value={frameIndex} onChange={(event) => setFrameIndex(Number(event.target.value))} /><div className="speed-controls" role="group" aria-label="Playback speed">{[.5, 1, 2, 4].map((rate) => <button key={rate} className={cn(speed === rate && 'active')} onClick={() => setSpeed(rate)}>{rate}×</button>)}</div><span>{frameIndex + 1} / {frameTimes.length}</span></div>
+      </section>
 
-            {/* Controls + Legend */}
-            <div className="col-span-4 flex flex-col gap-3">
-              <div className="card p-4">
-                {/* Progress bar */}
-                <div className="mb-4">
-                  <div className="h-1 bg-[var(--surface-elevated)] overflow-hidden mb-1" style={{ borderRadius: 0 }}>
-                    <div
-                      className="h-full bg-[var(--m-red)] transition-all duration-75"
-                      style={{ width: `${progressPct}%`, borderRadius: 0 }}
-                    />
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={Math.max(0, totalFrames - 1)}
-                    value={currentTimeIdx}
-                    onChange={(e) => {
-                      setCurrentTimeIdx(parseInt(e.target.value, 10));
-                      setPlaying(false);
-                    }}
-                    className="w-full h-3 opacity-0 cursor-pointer -mt-3 relative z-10"
-                  />
-                </div>
+      <section className="replay-player-stats">{humanParticipants.map((participant, index) => { const lap = frameLaps[index]; return <article key={participant.carIndex} style={{ '--driver': participant.humanProfile?.color || 'var(--race-red)' } as React.CSSProperties}><div className="identity"><Avatar name={participant.humanProfile?.name || participant.name} color={participant.humanProfile?.color} src={participant.humanProfile?.avatarUrl} /><span><strong>{participant.humanProfile?.name || participant.name}</strong><small>Car {participant.carIndex + 1}</small></span></div><Stat label="Track position" value={`P${lap?.car_position || '—'}`} /><Stat label="Current lap" value={lap?.current_lap_num || '—'} /><Stat label="Last lap" value={formatLapTime(lap?.last_lap_time_ms)} /><Stat label="Gap to rival" value={humanGap === null ? 'Unavailable' : formatGap(humanGap)} /></article>; })}</section>
 
-                {/* Transport buttons */}
-                <div className="flex items-center justify-center gap-3">
-                  <button
-                    onClick={() => setCurrentTimeIdx(0)}
-                    className="p-2 bg-[var(--surface-elevated)] hover:bg-[var(--surface-hover)] transition-colors"
-                    style={{ borderRadius: 0 }}
-                  >
-                    <SkipBack size={14} />
-                  </button>
-                  <button
-                    onClick={() => { setPlaying(!playing); lastFrameTime.current = 0; }}
-                    className="p-3 rounded-full bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 transition-colors"
-                  >
-                    {playing ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
-                  </button>
-                  <button
-                    onClick={() => setCurrentTimeIdx(Math.max(0, totalFrames - 1))}
-                    className="p-2 bg-[var(--surface-elevated)] hover:bg-[var(--surface-hover)] transition-colors"
-                    style={{ borderRadius: 0 }}
-                  >
-                    <SkipForward size={14} />
-                  </button>
-                </div>
-
-                {/* Speed selector */}
-                <div className="mt-4">
-                  <span className="text-[9px] uppercase tracking-wider text-[var(--muted-foreground)]" style={BMW_FONT}>Speed</span>
-                  <div className="tab-bar mt-1">
-                    {[0.5, 1, 2, 4].map((speed) => (
-                      <button
-                        key={speed}
-                        onClick={() => setPlaybackSpeed(speed)}
-                        className={`tab-item text-[10px] py-1 ${playbackSpeed === speed ? 'active' : ''}`}
-                      >
-                        {speed}x
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Driver legend + assignment */}
-              {session && (
-                <div className="card">
-                  <div className="card-header">
-                    <span className="card-title">Drivers</span>
-                    <span className="text-[10px] text-[var(--muted)]">{session.participants.length}</span>
-                  </div>
-                  <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
-                    {sortedParticipants.map((p) => {
-                      const linked = profiles.find((pr) => pr.id === p.humanProfileId);
-                      return (
-                        <div key={p.carIndex}>
-                          <div className="flex items-center gap-2 py-0.5">
-                            <div className="team-stripe h-4" style={{ backgroundColor: TEAM_COLORS[p.teamId] || '#666' }} />
-                            <span className="text-[11px] flex-1 truncate">{p.name}</span>
-                            {linked && (
-                              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: linked.color }} />
-                            )}
-                          </div>
-                          {!p.aiControlled && (
-                            <div className="ml-4 mt-1">
-                              <select
-                                value={p.humanProfileId || ''}
-                                disabled={assigning[p.carIndex]}
-                                onChange={(e) => assignProfile(p.carIndex, e.target.value || null)}
-                                className="w-full text-[9px] bg-[var(--surface)] border border-[var(--card-border)] px-1.5 py-1 text-[var(--muted-foreground)] focus:outline-none focus:border-[var(--m-blue-dark)] cursor-pointer"
-                                style={{ borderRadius: 0 }}
-                              >
-                                <option value="">— unlinked —</option>
-                                {profiles.map((pr) => (
-                                  <option key={pr.id} value={pr.id}>{pr.name}</option>
-                                ))}
-                              </select>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {session && (
-          <div className="mt-6">
-            <RaceMomentsTimeline sessionId={sessionId} />
-          </div>
-        )}
+      <div className="replay-context">
+        <Surface title="Race moments" caption="Select a moment to orient the replay timeline"><div className="moment-list">{moments.data?.events.length ? moments.data.events.map((event) => <button key={event.id} onClick={() => { if (event.sessionTimeMs && frameTimes.length) setFrameIndex(Math.min(frameTimes.length - 1, Math.floor(event.sessionTimeMs / 100))); }}><i /><span><strong>{eventName(event.eventCode)}</strong><small>{event.sessionTimeMs ? `${Math.floor(event.sessionTimeMs / 60000)}:${String(Math.floor(event.sessionTimeMs / 1000) % 60).padStart(2,'0')}` : 'Time unavailable'}</small></span><Timer /></button>) : <div className="quiet-message">No stored race events for this session.</div>}</div></Surface>
+        <Surface title="Driver assignments" caption="Connect anonymous cars to persistent profiles"><div className="assignment-list">{(moments.data?.participants || session?.participants || []).filter((item) => item.aiControlled === false || item.humanProfileId).map((participant) => <label key={participant.carIndex}><span>Car {participant.carIndex + 1} · {participant.name}</span><select className="input" value={participant.humanProfileId || ''} onChange={(event) => assign(participant.carIndex, event.target.value || null)}><option value="">Unassigned</option>{profiles.data?.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select></label>)}</div></Surface>
+        <Surface title="Replay capability" caption="Honest about recorded data"><div className="capability-list"><span><Gauge />Motion and lap timing<strong>Available</strong></span><span><Gauge />Historical pedals and ERS<strong className="unavailable">Not recorded by replay API</strong></span></div></Surface>
       </div>
-    </div>
-  );
+    </> : <EmptyState title="Replay motion is unavailable" message={sessionUID ? 'This session has no persisted motion frames. Race context and assignments remain available.' : 'The session UID is missing. Open replay from the session archive to preserve it.'} action={<button className="button" onClick={loadReplay}>Try replay again</button>} />}
+  </div>;
 }

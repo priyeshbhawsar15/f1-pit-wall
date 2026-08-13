@@ -1,100 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Filter } from 'lucide-react';
-import AppHeader from '@/components/AppHeader';
-import StandingsTable, { type StandingsPlayer } from '@/components/StandingsTable';
-import StandingsHighlights from '@/components/StandingsHighlights';
-
-const BMW_FONT = { fontFamily: "var(--font-ui)" };
-
-interface Season { id: string; name: string; isActive: boolean; }
+import { useState } from 'react';
+import Link from 'next/link';
+import { Filter, Trophy } from 'lucide-react';
+import { Avatar, EmptyState, ErrorState, LoadingState, PageIntro, Stat, StatusPill, Surface } from '@/components/UI';
+import { useResource } from '@/hooks/useResource';
+import type { SeasonSummary, StandingsPlayer } from '@/lib/frontend-types';
+import { formatLapTime } from '@/lib/presentation';
 
 export default function StandingsPage() {
-  const [standings, setStandings] = useState<StandingsPlayer[]>([]);
-  const [seasons, setSeasons] = useState<Season[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [seasonId, setSeasonId] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const seasons = useResource<SeasonSummary[]>('/api/seasons', []);
+  const [filters, setFilters] = useState({ seasonId: '', from: '', to: '' });
+  const [applied, setApplied] = useState(filters);
+  const query = new URLSearchParams(Object.entries(applied).filter(([, value]) => value));
+  const standings = useResource<StandingsPlayer[]>(`/api/standings?${query}`, []);
+  const leader = standings.data?.[0];
 
-  async function loadStandings() {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (seasonId) params.set('seasonId', seasonId);
-    if (from) params.set('from', from);
-    if (to) params.set('to', to);
-    const res = await fetch(`/api/standings?${params}`);
-    const data = await res.json();
-    if (Array.isArray(data)) setStandings(data);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    fetch('/api/seasons').then((r) => r.json()).then((data) => {
-      if (Array.isArray(data)) setSeasons(data);
-    });
-    loadStandings();
-  }, []);
-
-  return (
-    <div className="min-h-screen">
-      <AppHeader title="STANDINGS" />
-
-      <div className="max-w-6xl mx-auto p-6">
-        {/* Filters */}
-        <motion.div className="card p-4 mb-6 flex flex-wrap items-end gap-4" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <div>
-            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>Season</label>
-            <select
-              value={seasonId}
-              onChange={(e) => setSeasonId(e.target.value)}
-              className="bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]"
-            >
-              <option value="">All Sessions</option>
-              {seasons.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}{s.isActive ? ' ●' : ''}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>From</label>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)}
-              className="bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]" />
-          </div>
-          <div>
-            <label className="block text-[9px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1" style={BMW_FONT}>To</label>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)}
-              className="bg-[var(--surface)] border border-[var(--card-border)] rounded-sm px-3 py-1.5 text-xs focus:outline-none focus:border-[var(--m-blue-dark)]" />
-          </div>
-          <button
-            onClick={loadStandings}
-            className="flex items-center gap-2 bg-[var(--m-red)] hover:bg-[var(--m-red)]/80 text-white text-xs font-bold px-4 py-1.5 rounded-sm transition-colors"
-            style={BMW_FONT}
-          >
-            <Filter size={12} /> Apply
-          </button>
-          {(seasonId || from || to) && (
-            <button onClick={() => { setSeasonId(''); setFrom(''); setTo(''); }} className="text-xs text-[var(--muted-foreground)] hover:text-white transition-colors">Clear</button>
-          )}
-        </motion.div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[var(--m-red)] border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : standings.length === 0 ? (
-          <StandingsTable standings={standings} />
-        ) : (
-          <StandingsTable standings={standings} />
-        )}
-
-        {/* Quick stat cards */}
-        {!loading && standings.length > 0 && (
-          <StandingsHighlights standings={standings} />
-        )}
-      </div>
-    </div>
-  );
+  return <div className="page-shell">
+    <PageIntro title="Championship Order" description="A points ledger that keeps the rivalry readable. Filter the archive by season or dates, then open any driver’s record." meta={<>{leader && <StatusPill tone="live">Leader · {leader.name}</StatusPill>}<StatusPill tone="blue">{standings.data?.length || 0} classified drivers</StatusPill></>} />
+    <Surface title="Championship scope" caption="Filter only when the question changes" className="filter-surface"><form className="filter-row" onSubmit={(event) => { event.preventDefault(); setApplied(filters); }}><label>Season<select className="input" value={filters.seasonId} onChange={(event) => setFilters({ ...filters, seasonId: event.target.value })}><option value="">All sessions</option>{seasons.data?.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}</select></label><label>From<input className="input" type="date" value={filters.from} onChange={(event) => setFilters({ ...filters, from: event.target.value })} /></label><label>To<input className="input" type="date" value={filters.to} onChange={(event) => setFilters({ ...filters, to: event.target.value })} /></label><button className="button"><Filter />Apply scope</button></form></Surface>
+    {standings.loading ? <LoadingState label="Calculating standings" /> : standings.error ? <ErrorState message={standings.error} onRetry={standings.reload} /> : standings.data?.length ? <>
+      <div className="standings-leaders">{standings.data.slice(0, 3).map((player, index) => <Link href={`/players/${player.id}`} key={player.id} className={`leader-block place-${index + 1}`}><span>P{index + 1}</span><Avatar name={player.name} color={player.color} src={player.avatarUrl} size={index === 0 ? 'lg' : 'md'} /><div><strong>{player.name}</strong><small>{player.stats.wins} wins · {player.stats.podiums} podiums</small></div><b>{player.stats.points}<small>PTS</small></b></Link>)}</div>
+      <Surface title="Full standings" caption="Points first; race texture stays one click away"><div className="ledger-scroll"><table className="data-ledger"><thead><tr><th>Pos</th><th>Driver</th><th>Points</th><th>Wins</th><th>Podiums</th><th>Avg finish</th><th>Best lap</th><th>Incidents</th></tr></thead><tbody>{standings.data.map((player, index) => <tr key={player.id}><td className="rank">{index + 1}</td><td><Link className="identity" href={`/players/${player.id}`}><Avatar name={player.name} color={player.color} src={player.avatarUrl} size="sm" /><span><strong>{player.name}</strong><small>{player.stats.races} races</small></span></Link></td><td><Stat label="" value={player.stats.points} /></td><td className="tabular">{player.stats.wins}</td><td className="tabular">{player.stats.podiums}</td><td className="tabular">{player.stats.avgPosition ?? '—'}</td><td className="tabular">{formatLapTime(player.stats.bestLapMs)}</td><td className="tabular">{player.stats.collisions + player.stats.penalties}</td></tr>)}</tbody></table></div></Surface>
+    </> : <EmptyState title="No championship data" message="Assign driver profiles to classified sessions to populate the standings." action={<Link className="button" href="/sessions">Review sessions</Link>} />}
+  </div>;
 }

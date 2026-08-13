@@ -1,137 +1,225 @@
-# F1 25 Live Telemetry Dashboard
+# F1 Telemetry Pit Wall
 
-Real-time telemetry dashboard for EA F1 25 that connects to the game's UDP telemetry stream, stores data in TimescaleDB, and displays it in a Next.js web app.
+**Live dashboard and race replay for EA SPORTS F1 25 UDP telemetry**
 
-## Features
+F1 Telemetry Pit Wall turns a live F1 25 UDP stream into a readable race story for two human drivers. It combines an on-track dashboard, player-focused telemetry, session history, replay controls, driver profiles, seasons, and standings in a self-hosted Next.js application.
 
-### Live Dashboard
-- **Track Map** — 2D canvas rendering of all 22 car positions, color-coded by team with trailing paths
-- **Leaderboard** — Position, driver name, team, gap to leader/car in front, last lap, tyre info, pit status
-- **Telemetry Panel** — Speed, throttle/brake bars, gear, DRS status, RPM, tyre & engine temps
-- **ERS Monitor** — Energy store, deploy mode, ICE/MGU-K power output, harvest rates
-- **Tyre Strategy** — Compound, age, wear %, surface/inner temps, pressure, DRS availability, fuel
-- **Event Feed** — Live log of overtakes, penalties, collisions, fastest laps, safety cars, DRS events
-- **Session Info Bar** — Track, session type, weather, temperatures, time remaining, safety car status
+> This is an independent open-source project. It is not affiliated with, endorsed by, or sponsored by Formula 1, EA, or any of their partners. The project uses original interface styling and does not bundle official logos, fonts, or other branded assets.
 
-### Session Replay
-- Browse all recorded sessions at `/sessions`
-- Replay any session with play/pause, speed controls (0.5x–4x), and timeline scrubbing
-- Full track visualization with all car positions animated from stored data
+![F1 Telemetry Pit Wall dashboard](docs/screenshots/dashboard.png)
+
+## What it does
+
+- **Live race theater** — Follow the two-player battle, running order, live interval, track position, weather, time remaining, race-control state, and recent moments.
+- **Track stage** — View the field on a 2D track map with driver labels, team colors, player emphasis, and motion trails.
+- **Selected-car telemetry** — Inspect speed, gear, throttle, brake, fuel, and ERS for the selected driver.
+- **Live analysis** — Switch between race context, lap history, position history, and setup comparison as packets arrive.
+- **Session archive** — Browse recorded sessions, classified results, weather, race distance, and event counts.
+- **Race replay** — Load persisted motion and lap data, play or pause the map, scrub the timeline, step frames, and choose 0.5×, 1×, 2×, or 4× playback.
+- **Driver profiles and head-to-head** — Connect anonymous car indexes to two human profiles, compare shared races, and keep career records readable.
+- **Seasons and standings** — Group sessions into championships, add rounds, filter points by season or date, and link each result back to replay.
+- **2025 and 2026 packet formats** — The parser resolves the supported F1 25 telemetry layouts from packet format, packet size, and session context. The repository includes tests for both formats.
 
 ## Architecture
 
+```text
+┌──────────────────┐       UDP :20777       ┌──────────────────────────────────────┐
+│                  │ ─────────────────────► │ Custom Node server                   │
+│  EA SPORTS F1 25 │                        │ UDP listener + format-aware parsers  │
+│  game            │                        │ Next.js + Socket.IO                  │
+└──────────────────┘                        └───────────────┬───────────┬──────────┘
+                                                            │           │
+                                             Redis pub/sub  │           │ Prisma + SQL
+                                                            ▼           ▼
+                                                     ┌───────────┐ ┌───────────────┐
+                                                     │  Redis    │ │ TimescaleDB   │
+                                                     │ realtime  │ │ history       │
+                                                     └─────┬─────┘ └───────┬───────┘
+                                                           │               │
+                                                           └───────┬───────┘
+                                                                   ▼
+                                                        ┌──────────────────┐
+                                                        │ Browser           │
+                                                        │ React + Zustand  │
+                                                        │ dashboard/replay │
+                                                        └──────────────────┘
 ```
-F1 25 Game → UDP :20777 → Next.js Custom Server (parser + socket.io + DB writer) → TimescaleDB + Redis → Browser
-```
 
-**3 Docker containers:**
-- `web` — Next.js 14 app with embedded UDP listener and socket.io WebSocket server
-- `timescaledb` — PostgreSQL 16 + TimescaleDB extension (time-series hypertables with auto-compression)
-- `redis` — Redis 7 for real-time pub/sub between UDP ingestion and WebSocket broadcasting
+The Docker Compose stack contains three services:
 
-## Quick Start
+| Service | Role | Ports |
+| --- | --- | --- |
+| `web` | Next.js application, custom HTTP server, UDP listener, and Socket.IO server | `3333/tcp`, `20777/udp` |
+| `timescaledb` | PostgreSQL 16 with TimescaleDB for relational and time-series history | `5432/tcp` |
+| `redis` | Pub/sub broker between telemetry ingestion and browser clients | `6379/tcp` |
 
-### With Docker (recommended)
+High-frequency motion, telemetry, lap, car-status, and damage samples are stored in TimescaleDB hypertables. Sessions, participants, events, classifications, driver profiles, seasons, and race links use Prisma-managed relational tables. Redis carries the live stream from the UDP ingestion path to Socket.IO clients.
+
+## UI routes
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Live race theater with Race, Analysis, and Setup views |
+| `/sessions` | Recorded-session archive and replay entry points |
+| `/sessions/[id]` | Map-dominant session replay with timeline and driver assignments |
+| `/players` | Human driver profiles and archive identity management |
+| `/players/[id]` | Career record, race history, and circuit benchmarks |
+| `/players/h2h` | Head-to-head comparison for two driver profiles |
+| `/seasons` | Championship collections and active/archived seasons |
+| `/seasons/[id]` | Season standings, linked rounds, and replay links |
+| `/standings` | Filterable all-time or season-scoped championship order |
+
+## Prerequisites
+
+For the Docker workflow:
+
+- Docker Engine or Docker Desktop with Docker Compose
+- A machine that can receive UDP traffic from the game
+- An EA SPORTS F1 25 installation with UDP telemetry enabled
+
+For local development without the `web` container:
+
+- Node.js 20 or newer
+- npm
+- Docker Compose for TimescaleDB and Redis, or equivalent local PostgreSQL 16 + TimescaleDB and Redis services
+
+The application is designed for a private/self-hosted environment. Do not expose the database, Redis, or UDP listener to the public internet without adding your own network controls.
+
+## Quick start with Docker
+
+From the repository root:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
-This starts all 3 services. Open http://localhost:3333 in your browser.
+The first database startup applies the SQL files mounted by `docker-compose.yml`, including the TimescaleDB hypertable setup. Open the dashboard at <http://localhost:3333>.
 
-### F1 25 Game Settings
-
-1. Go to **Settings → Telemetry**
-2. Set **UDP Telemetry** to **On**
-3. Set **UDP IP Address** to the machine running this app (or `127.0.0.1` if same machine)
-4. Set **UDP Port** to `20777`
-5. Set **UDP Send Rate** to `30Hz` or higher
-6. Set **UDP Format** to `2025` or `2026`; both layouts are detected automatically
-
-### Local Development
+To stop the stack:
 
 ```bash
-# Start TimescaleDB and Redis
-docker-compose up timescaledb redis
+docker compose down
+```
 
-# Install dependencies
+To remove the local database volume as well (destructive to captured history):
+
+```bash
+docker compose down -v
+```
+
+The Compose file uses development credentials for the local stack. Treat them as local-only defaults and replace them before using the deployment outside a trusted machine.
+
+## Configure F1 25 telemetry
+
+In the game, open **Settings → Telemetry → UDP** and use values that point to the machine running the `web` service:
+
+| Game setting | Value |
+| --- | --- |
+| UDP telemetry | On |
+| UDP broadcast mode | Off when direct targeting is available |
+| UDP IP address | The server machine’s LAN address, or `127.0.0.1` when game and app share a machine |
+| UDP port | `20777` |
+| UDP send rate | `20Hz` or `60Hz` |
+| UDP format | `2025` or `2026` |
+
+The server listens on `UDP_HOST` and `UDP_PORT`; Docker binds UDP port `20777` from the host into the `web` container. If the game runs on another machine, allow inbound UDP `20777` through the server machine’s firewall and use its LAN address in the game.
+
+## Local development
+
+Use Docker for only the infrastructure services, then run the custom server with `ts-node`:
+
+```bash
+cp .env.example .env
+# For a host process, change the Docker service names in .env:
+# DATABASE_URL=postgresql://postgres:<local-password>@localhost:5432/f1telemetry
+# REDIS_URL=redis://localhost:6379
+
 npm install
-
-# Generate Prisma client
 npx prisma generate
-
-# Run database migrations
+docker compose up -d timescaledb redis
 npx prisma db push
-
-# Apply TimescaleDB hypertables (run once)
-psql postgresql://postgres:postgres@localhost:5432/f1telemetry -f prisma/migrations/init/migration.sql
-
-# Start dev server
 npm run dev
 ```
 
-## Environment Variables
+Open <http://localhost:3333>. The custom server is required: it starts Next.js, attaches Socket.IO, and binds the UDP listener in one process. Do not replace `npm run dev` with `next dev` when testing live telemetry.
 
-| Variable | Default | Description |
-|---|---|---|
-| `DATABASE_URL` | `postgresql://postgres:postgres@localhost:5432/f1telemetry` | TimescaleDB connection string |
-| `REDIS_URL` | `redis://localhost:6379` | Redis connection string |
-| `UDP_PORT` | `20777` | UDP port to listen for F1 telemetry |
-| `NEXT_PUBLIC_SOCKET_URL` | `http://localhost:3000` | WebSocket URL for the browser client |
+Useful package scripts:
 
-## Tech Stack
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the custom development server |
+| `npm run build` | Create the production Next.js build |
+| `npm run start` | Start the compiled production server from `dist/server.js` |
+| `npm run test` | Run telemetry parser format tests |
+| `npm run db:generate` | Generate the Prisma client |
+| `npm run db:push` | Synchronize Prisma schema in development |
+| `npm run db:migrate` | Apply committed Prisma migrations |
 
-| Component | Technology |
-|---|---|
-| Frontend | Next.js 14, React 18, TypeScript |
-| Styling | Tailwind CSS, Lucide icons |
-| State | Zustand |
-| Real-time | Socket.IO, Redis pub/sub |
-| Database | TimescaleDB (PostgreSQL 16) |
-| UDP Parser | Node.js dgram, custom binary parsers |
-| ORM | Prisma 6 |
-| Containers | Docker, Docker Compose |
-| 5 | Car Setups | Setup comparison (future) |
-| 6 | Car Telemetry | Speed, brakes, temps |
-| 7 | Car Status | ERS, DRS, tyres, fuel |
-| 8 | Final Classification | Race results |
-| 9 | Lobby Info | Multiplayer lobby |
-| 10 | Car Damage | Wear, damage levels |
-| 11 | Session History | Lap/sector history |
-| 12 | Tyre Sets | Available tyre sets |
-| 13 | Motion Ex | Extended player motion |
-| 14 | Time Trial | Time trial data |
-| 15 | Lap Positions | Position history per lap |
+## Configuration
 
-## Database Schema
+Copy `.env.example` to `.env` for local development. Do not commit `.env` or real credentials.
 
-**Prisma-managed (relational):** `sessions`, `participants`, `events`, `final_classifications`
+| Variable | Default in the repository | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | `postgresql://postgres:postgres@timescaledb:5432/f1telemetry` | PostgreSQL/TimescaleDB connection string. Use `localhost` when the app runs on the host. |
+| `REDIS_URL` | `redis://redis:6379` | Redis connection string. Use `localhost` when the app runs on the host. |
+| `UDP_HOST` | `192.168.2.90` in `.env.example`; server fallback `0.0.0.0` | Local interface used by the UDP listener. Set it to `0.0.0.0` in a container or to a local host interface. |
+| `UDP_PORT` | `20777` | UDP port receiving game telemetry. Keep it aligned with the game setting and Compose mapping. |
+| `NEXT_PUBLIC_SOCKET_URL` | `http://localhost:3333` | Browser URL used for the Socket.IO connection. |
+| `PORT` | `3333` in the custom server fallback | HTTP port for the Next.js application. |
+| `NODE_ENV` | Development unless overridden | Runtime mode; Docker sets production in the final image. |
 
-**TimescaleDB hypertables (time-series):** `motion_samples`, `telemetry_samples`, `lap_data_samples`, `car_status_samples`, `car_damage_samples` — with automatic compression after 1 day
+The sample connection strings intentionally use placeholder local development credentials. Use a secret manager or environment injection for any shared or deployed environment.
 
-## Project Structure
+## Validation
 
+Run the project’s parser tests and production build before submitting a change:
+
+```bash
+npm run test
+git diff --check
+npm run build
 ```
-f1-app/
-├── server.ts                  # Custom server: Next.js + UDP + socket.io
-├── docker-compose.yml
-├── Dockerfile
+
+The parser tests cover packet sizes, format detection, car-slot counts, and format-specific fields for both 2025 and 2026 layouts. No lint script is currently defined in `package.json`.
+
+## Project structure
+
+```text
+.
+├── server.ts                 # Custom HTTP + Socket.IO + UDP entry point
+├── docker-compose.yml        # web, TimescaleDB, and Redis services
+├── Dockerfile                # Multi-stage Node 20 production image
 ├── prisma/
-│   ├── schema.prisma          # Relational models
-│   └── migrations/init/       # TimescaleDB hypertable SQL
+│   ├── schema.prisma         # Relational models
+│   └── migrations/           # Database and hypertable SQL
+├── sample_telemetry_data/    # Packet-format reference material
 ├── src/
-│   ├── app/                   # Next.js pages & API routes
-│   │   ├── page.tsx           # Live dashboard
-│   │   ├── sessions/          # Session history & replay
-│   │   └── api/               # REST endpoints
-│   ├── components/            # React UI components
-│   ├── hooks/useSocket.ts     # Socket.IO client hook
-│   ├── stores/                # Zustand state store
-│   ├── lib/                   # Constants, utils, DB client
-│   └── server/                # Server-only code
-│       ├── udp-listener.ts    # UDP socket + dispatcher
-│       ├── parser/            # Binary packet parsers (16 types)
-│       ├── db/writers.ts      # TimescaleDB batch writers
-│       └── realtime/          # Redis pub/sub + socket.io
-└── .env
+│   ├── app/                  # Next.js routes and API handlers
+│   ├── components/           # Dashboard, map, replay, and shared UI
+│   ├── hooks/                # Browser resource and Socket.IO hooks
+│   ├── lib/                  # Presentation helpers, constants, and database client
+│   └── server/               # UDP parsers, realtime relay, and database writers
+├── tests/                    # Telemetry-format parser tests
+└── docs/screenshots/         # Repository-friendly UI evidence
 ```
+
+## Contributing and limitations
+
+Contributions are welcome when they keep the telemetry pipeline and UI behavior understandable. For a focused change:
+
+1. Create a branch from `main`.
+2. Keep packet-format or schema changes paired with the relevant reference material and tests.
+3. Run `npm run test`, `npm run build`, and `git diff --check`.
+4. Describe telemetry assumptions, migration needs, and validation in the pull request. Include screenshots for visual changes.
+
+Current limitations include:
+
+- The app expects the supported F1 25 UDP packet formats and does not claim compatibility with other game versions.
+- Replay quality depends on the samples persisted during the original session; the replay API currently exposes motion and lap timing rather than every live telemetry field.
+- This repository does not provide a public hosted service, authentication layer, or production secret-management policy.
+- Database retention, firewalling, backups, and operational monitoring remain deployment responsibilities.
+
+## License
+
+No license file is currently included. Until a license is added, treat the repository as source-available and ask the maintainers before redistributing it.

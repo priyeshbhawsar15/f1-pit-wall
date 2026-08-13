@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-15T18:52:17Z",
+  "title": "Design System: F1 Head-to-Head Telemetry",
+  "extensions": {
+    "colorMeta": {
+      "canvas": { "role": "neutral", "displayName": "Broadcast Canvas", "canonical": "#090a0c", "tonalRamp": ["#090a0c", "#0f1115", "#101217", "#14171c", "#1a1e24", "#20242b", "#30343c", "#464c57"] },
+      "race-blue": { "role": "primary", "displayName": "Race Blue", "canonical": "#1c69d4", "tonalRamp": ["#07152d", "#0b2349", "#10356d", "#164b9a", "#1c69d4", "#4e89e0", "#86afea", "#c3d7f5"] },
+      "race-red": { "role": "secondary", "displayName": "Race Red", "canonical": "#e22718", "tonalRamp": ["#2e0906", "#50100b", "#7c170f", "#b81e12", "#e22718", "#ec6258", "#f29a94", "#f9d0cd"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Player names and highest local headings." },
+      "display": { "displayName": "Telemetry display", "purpose": "Speed, gear, and race position only." },
+      "display-compact": { "displayName": "Compact telemetry display", "purpose": "Gear and player position in constrained panels." },
+      "display-mobile": { "displayName": "Mobile telemetry display", "purpose": "Large telemetry values on narrow screens." },
+      "title": { "displayName": "Panel title", "purpose": "Quiet sentence-case section headings." },
+      "body": { "displayName": "Body", "purpose": "Supporting explanation and context." },
+      "label": { "displayName": "Label", "purpose": "Navigation and compact metric names." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "state-fast", "value": "180ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Hover, focus, and selection feedback." },
+      { "name": "panel-change", "value": "200ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Dashboard view and detail transitions." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "767px" },
+      { "name": "desktop-dashboard", "value": "1279px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "surface-card",
+      "description": "Primary telemetry panel with tonal depth and a quiet hairline.",
+      "html": "<section class=\"ds-card\"><h2>Telemetry</h2><p>Supporting race information</p></section>",
+      "css": ".ds-card { background:#14171c; color:#fff; border:1px solid #242830; border-radius:14px; padding:18px; } .ds-card h2 { margin:0; font:700 12px/1.3 Satoshi,Inter,sans-serif; } .ds-card p { margin:8px 0 0; color:#969da8; font:400 13px/1.45 Satoshi,Inter,sans-serif; }"
+    },
+    {
+      "name": "Player Panel",
+      "kind": "button",
+      "refersTo": "player-panel",
+      "description": "Selectable two-player summary that opens technical detail.",
+      "html": "<button class=\"ds-player\"><span class=\"ds-position\">3</span><span><strong>Player</strong><small>Last lap 1:28.442</small></span></button>",
+      "css": ".ds-player { width:100%; display:flex; align-items:center; gap:12px; background:#101217; color:#fff; border:1px solid transparent; border-radius:10px; padding:18px; text-align:left; font-family:Satoshi,Inter,sans-serif; transition:background 180ms cubic-bezier(.16,1,.3,1),border-color 180ms cubic-bezier(.16,1,.3,1); } .ds-player:hover { background:#1a1e24; } .ds-player:focus-visible { outline:2px solid #1c69d4; outline-offset:2px; } .ds-position { font-size:36px; font-weight:700; } .ds-player strong,.ds-player small { display:block; } .ds-player small { margin-top:4px; color:#969da8; }"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "status-pill",
+      "description": "Compact text-backed live state indicator.",
+      "html": "<span class=\"ds-status\"><span></span>Live</span>",
+      "css": ".ds-status { display:inline-flex; align-items:center; gap:5px; background:#0fa336; color:#000; border-radius:999px; padding:2px 8px; font:700 9px/1.3 Satoshi,Inter,sans-serif; text-transform:uppercase; letter-spacing:1px; } .ds-status span { width:6px; height:6px; border-radius:50%; background:currentColor; }"
+    },
+    {
+      "name": "Navigation Item",
+      "kind": "nav",
+      "description": "Quiet destination control with a tonal active state.",
+      "html": "<a class=\"ds-nav\" href=\"#\">History</a>",
+      "css": ".ds-nav { display:inline-flex; align-items:center; color:#969da8; border-radius:6px; padding:8px 12px; font:600 11px/1.3 Satoshi,Inter,sans-serif; text-decoration:none; transition:background 180ms cubic-bezier(.16,1,.3,1),color 180ms cubic-bezier(.16,1,.3,1); } .ds-nav:hover { background:#1a1e24; color:#fff; } .ds-nav:focus-visible { outline:2px solid #1c69d4; outline-offset:2px; }"
+    },
+    {
+      "name": "Select Field",
+      "kind": "input",
+      "description": "Compact charcoal field for driver and session filtering.",
+      "html": "<label class=\"ds-field\"><span>Driver</span><select><option>Player one</option></select></label>",
+      "css": ".ds-field { display:grid; gap:6px; color:#969da8; font:500 11px/1.3 Satoshi,Inter,sans-serif; } .ds-field select { appearance:auto; background:#14171c; color:#fff; border:1px solid #30343c; border-radius:6px; padding:7px 10px; font:400 12px/1.3 Satoshi,Inter,sans-serif; } .ds-field select:hover { border-color:#464c57; } .ds-field select:focus-visible { outline:2px solid #1c69d4; outline-offset:2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Head-to-Head Broadcast",
+    "overview": "This interface should feel like a modern race broadcast built around two competitors: immediate enough for spectators, precise enough for the players, and calm enough to scan throughout a full session. The two human players and the changing story between them are the primary visual layer. Whole-field standings, technical telemetry, and historical detail remain accessible as supporting layers. The system uses a dark canvas because it is commonly viewed on a gaming display during a live session, where low glare and stable data colors matter. Minimalism comes from hierarchy, consolidation, and progressive disclosure—not from removing useful telemetry. It explicitly rejects an overcrowded engineering console, a flashy arcade HUD, and a generic admin template.",
+    "keyCharacteristics": ["Two-player comparison first", "Quiet tonal layers", "Broadcast-readable telemetry", "Progressive technical detail", "State-driven motion"],
+    "rules": [
+      { "name": "The Signal Color Rule", "body": "Saturated colors communicate identity or live state; they do not decorate inactive panels.", "section": "colors" },
+      { "name": "The Broadcast Scan Rule", "body": "A viewer should distinguish player, position, comparison, and state from typography alone before color is considered.", "section": "typography" },
+      { "name": "The Tonal Depth Rule", "body": "Use a neighboring surface token before adding a border, and a border before considering a shadow.", "section": "elevation" }
+    ],
+    "dos": ["Place the two human players and their changing competitive relationship before whole-field detail.", "Retain useful telemetry through progressive disclosure and compact secondary rows.", "Use 6px, 10px, and 14px radii consistently.", "Use semantic colors for live states and pair those colors with text.", "Keep motion between 150–250ms, tied to selection, status, or live value changes, with reduced-motion support."],
+    "donts": ["Recreate an overcrowded engineering console or a generic admin template.", "Box every metric, nest cards, or use separators where spacing and alignment are enough.", "Use arcade-style glow, decorative glass, gradient text, or animated ornament.", "Use colored side-stripe borders on rows or panels.", "Hide useful race information in pursuit of information-light minimalism."]
+  }
+}

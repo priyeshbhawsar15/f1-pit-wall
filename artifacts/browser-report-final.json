@@ -1,0 +1,108 @@
+{
+  "console": [],
+  "pageErrors": [],
+  "failedResponses": [],
+  "checks": [
+    {
+      "name": "dashboard-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "document": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 1463
+      },
+      "body": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "h1": "Live Race Theater",
+      "overflowElements": []
+    },
+    {
+      "name": "dashboard-analysis-interaction",
+      "visible": true
+    },
+    {
+      "name": "dashboard-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 2143
+      },
+      "body": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "h1": "Live Race Theater",
+      "overflowElements": []
+    },
+    {
+      "name": "sessions-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 10123
+      },
+      "body": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "h1": "Race Archive",
+      "overflowElements": []
+    },
+    {
+      "name": "replay-mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "document": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 2239
+      },
+      "body": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "h1": "Las Vegas",
+      "overflowElements": []
+    },
+    {
+      "name": "replay-mobile-interactions",
+      "play": 1,
+      "slider": 1,
+      "canvas": 1,
+      "url": "http://127.0.0.1:4173/sessions/15ff6f9c-f1b6-4ed9-9024-aedf2f8391be?uid=-7074585964162019473"
+    },
+    {
+      "name": "replay-desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "document": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 1666
+      },
+      "body": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "h1": "Las Vegas",
+      "overflowElements": []
+    }
+  ]
+}
