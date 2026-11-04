@@ -163,7 +163,7 @@ Copy `.env.example` to `.env` for local development. Do not commit `.env` or rea
 | --- | --- | --- |
 | `DATABASE_URL` | `postgresql://postgres:postgres@timescaledb:5432/f1telemetry` | PostgreSQL/TimescaleDB connection string. Use `localhost` when the app runs on the host. |
 | `REDIS_URL` | `redis://redis:6379` | Redis connection string. Use `localhost` when the app runs on the host. |
-| `UDP_HOST` | `192.168.2.90` in `.env.example`; server fallback `0.0.0.0` | Local interface used by the UDP listener. Set it to `0.0.0.0` in a container or to a local host interface. |
+| `UDP_HOST` | `0.0.0.0` | Local interface used by the UDP listener. Set it to `0.0.0.0` in a container or to a local host interface. |
 | `UDP_PORT` | `20777` | UDP port receiving game telemetry. Keep it aligned with the game setting and Compose mapping. |
 | `NEXT_PUBLIC_SOCKET_URL` | `http://localhost:3333` | Browser URL used for the Socket.IO connection. |
 | `PORT` | `3333` in the custom server fallback | HTTP port for the Next.js application. |
